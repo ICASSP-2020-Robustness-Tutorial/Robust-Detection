@@ -2,7 +2,6 @@ import sys
 import os
 
 import numpy as np
-from scipy import optimize
 from numpy import linalg as la
 
 sys.path.append(os.path.abspath("../../Helper_Functions"))
@@ -105,12 +104,7 @@ def density_band(
                 - 1
             )
 
-        while True:
-            try:
-                c1 = optimize.brentq(func0, 0.0, c1_max)
-                break
-            except ValueError:
-                c1_max *= 2
+        c1, c1_max = hlp.get_pos_root(func0, c1_max)
         q0_new = np.minimum(p0_max, np.maximum(c1 * (alpha * q0 + q1), p0_min))
 
         # update q1 using q0_new (!)
@@ -123,12 +117,7 @@ def density_band(
                 - 1
             )
 
-        while True:
-            try:
-                c0 = optimize.brentq(func1, 0.0, c0_max)
-                break
-            except ValueError:
-                c0_max *= 2
+        c0, c0_max = hlp.get_pos_root(func1, c0_max)
         q1_new = np.minimum(p1_max, np.maximum(c0 * (alpha * q1 + q0_new), p1_min))
 
         # calculate norm of difference

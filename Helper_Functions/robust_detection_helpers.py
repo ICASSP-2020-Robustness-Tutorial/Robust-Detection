@@ -1,13 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr  9 16:57:16 2020
-
-@author: mfauss
-"""
-
 import numpy as np
 
+from scipy import optimize
 
 def is_nonnegative_scalar(x):
     return np.isscalar(x) and np.isreal(x) and x >= 0
@@ -30,3 +23,13 @@ def is_valid_density_band(p_min, p_max, dx):
         and np.all(p_min >= 0)
         and np.all(p_min <= p_max)
     )
+
+
+def get_pos_root(func, x_max_guess):
+    x_max = x_max_guess
+    while True:
+        try:
+            x0 = optimize.brentq(func, 0.0, x_max)
+            return x0, x_max
+        except ValueError:
+            x_max *= 2
