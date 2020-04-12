@@ -30,7 +30,7 @@ p_max[0, :] = 1.2 * p0
 p_max[1, :] = 1.2 * p1
 
 # solve for LFDs
-q0, q1, llr, c, nit = lfds.density_band(p_min, p_max, dx)
+q0, q1, llr, c, nit = lfds.density_band(p_min, p_max, dx, verbose=True)
 
 # plot lfds
 fig1, ax1 = plt.subplots()
@@ -52,7 +52,7 @@ LFDs under 10% and 15% contamination (outliers)
 eps = 0.1, 0.15
 
 # solve for LFDs
-q0, q1, llr, c = lfds.outliers(p0, p1, dx, eps)
+q0, q1, llr, c = lfds.outliers(p0, p1, dx, eps, verbose=True)
 
 # plot lfds
 fig3, ax3 = plt.subplots()

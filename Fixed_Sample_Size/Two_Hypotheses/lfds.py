@@ -12,12 +12,13 @@ def density_band(
     p_min,
     p_max,
     dx,
+    verbose=False,
     alpha=0.01,
     q0_init=np.nan,
     q1_init=np.nan,
     order=np.inf,
     tol=1e-6,
-    itmax=100,
+    itmax=100
 ):
     """
     Get least favourable densities for two hypotheses under density band uncertainty
@@ -33,11 +34,12 @@ def density_band(
         dx:             grid size for numerical integraton
 
     OPTIONAL INPUT
-        alpha           regularization parameter, defaults to 0.0
-        q0_init         initial guess for q0, defaults to uniform density
-        q1_init         initial guess for q1, defaults to uniform density
-        order           vector norm used for convergence criterion, defaults to np.inf
-        tol             vector-norm tolerance of fixed-point, defaults to 1e-6
+        verbose:        display progress, defaults to false
+        alpha:          regularization parameter, defaults to 0.0
+        q0_init:        initial guess for q0, defaults to uniform density
+        q1_init:        initial guess for q1, defaults to uniform density
+        order:          vector norm used for convergence criterion, defaults to np.inf
+        tol:            vector-norm tolerance of fixed-point, defaults to 1e-6
         itmax:          maximum number of iterations, defaults to 100
 
     OUTPUT
@@ -85,12 +87,18 @@ def density_band(
             raise ValueError("User supplied initialization for q1 is invalid.")
 
     # initialize counters
-    dist = np.inf
+    res = np.inf
     nit = 0
     c0_max, c1_max = 100.0, 100.0
 
+    # Disply prgoress, if verbose flag is set
+    if verbose:
+        print("\n")
+        print("Iteration | Residual q0 | Residual q1 |    c0   |    c1   ")
+        print("----------|-------------|-------------|---------|---------")
+
     # solve fixed-point equation iteratively
-    while dist > tol and nit < itmax:
+    while res > tol and nit < itmax:
 
         # assigne updated lfds
         q0 = q0_new
@@ -120,11 +128,15 @@ def density_band(
         c0, c0_max = hlp.get_pos_root(func1, c0_max)
         q1_new = np.minimum(p1_max, np.maximum(c0 * (alpha * q1 + q0_new), p1_min))
 
-        # calculate norm of difference
-        dist = np.maximum(la.norm(q0_new - q0, order), la.norm(q1_new - q1, order))
+        # calculate residuals
+        res0 = la.norm(q0_new - q0, order)
+        res1 = la.norm(q1_new - q1, order)
+        res = np.maximum(res0, res1)
 
         # count iterations
         nit += 1
+        if verbose:
+            print("%9d |  %.4e |  %.4e |  %.4f |  %.4f" % (nit, res0, res1, c0, c1))
 
     # check results
     if nit == itmax:
@@ -141,7 +153,7 @@ def density_band(
     return q0, q1, llr, c, nit
 
 
-def outliers(p0, p1, dx, eps):
+def outliers(p0, p1, dx, eps, verbose=False):
     """
     Get least favourable densities for two hypotheses under epsilon contamination
     uncertainty as a specail case of band uncertainty.
@@ -151,6 +163,9 @@ def outliers(p0, p1, dx, eps):
         p1:             nominal density under H1, 1xK vector
         dx:             grid size for numerical integraton
         eps:            outlier ration, can be a scalar or a 2-tuple (eps0, eps1)
+
+    OPTIONAL INPUT
+        verbose:        display progress, defaults to false
 
     OUTPUT
         q0, q1:         least favorable densities
@@ -190,6 +205,8 @@ def outliers(p0, p1, dx, eps):
     p_max[1, :] = np.ones_like(p1) / dx
 
     # solve via density band algorithm
-    q0, q1, llr, c, _ = density_band(p_min, p_max, dx, q0_init=p0, q1_init=p1)
+    q0, q1, llr, c, _ = density_band(
+        p_min, p_max, dx, q0_init=p0, q1_init=p1, verbose=verbose
+    )
 
     return q0, q1, llr, c
