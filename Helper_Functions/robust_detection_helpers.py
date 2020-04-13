@@ -2,6 +2,7 @@ import numpy as np
 
 from scipy import optimize
 
+
 def is_nonnegative_scalar(x):
     return np.isscalar(x) and np.isreal(x) and x >= 0
 
