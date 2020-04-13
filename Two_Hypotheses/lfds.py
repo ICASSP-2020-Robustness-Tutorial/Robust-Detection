@@ -70,7 +70,7 @@ def density_band(
 
     # user defined initialization for q0
     if np.any(np.isnan(q0_init)):
-        q0_new = np.ones(K)
+        q0_new = np.ones(K)/(K*dx)
     else:
         if np.all(q0_init >= 0.0) and q0_init.ndim == 1 and q0_init.size == K:
             q0_new = q0_init
@@ -91,7 +91,7 @@ def density_band(
     nit = 0
     c0_max, c1_max = 100.0, 100.0
 
-    # Disply prgoress, if verbose flag is set
+    # disply prgoress, if verbose flag is set
     if verbose:
         print("\n")
         print("Iteration | Residual q0 | Residual q1 |    c0   |    c1   ")
