@@ -53,7 +53,7 @@ LFDs under density band uncertainty
 """
 
 # denisty band model using regular algorithm
-Q, c, nit = mlfds.density_band(f, df, P_min, P_max, dx, verbose=True)
+Q, I_val, c, nit = mlfds.density_band(f, df, P_min, P_max, dx, verbose=True)
 
 # plot lfds
 fig1, ax1 = plt.subplots()

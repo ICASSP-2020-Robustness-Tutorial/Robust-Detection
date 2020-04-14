@@ -36,6 +36,7 @@ def density_band(
 
     OUTPUT
         Q:              least favorable densities, NxK matrix
+        I_val:          Value of the functional evaluated at Q
         c:              clipping constants c0, c1
         nit:            number of iterations
     """
@@ -115,7 +116,9 @@ def density_band(
                 % (nit, np.sum(residuals), np.max(np.abs(np.sum(Q, 1)) * dx - 1))
             )
 
-    return Q, c, nit
+    I_val = np.sum(f(np.arange(K), Q)) * dx
+
+    return Q, I_val, c, nit
 
 
 def density_band_proximal(
@@ -153,6 +156,7 @@ def density_band_proximal(
 
     OUTPUT
         Q:              least favorable densities, NxK matrix
+        I_val:          Value of the functional evaluated at Q
         c:              clipping constants c0, c1
         nit:            number of iterations
     """
@@ -193,7 +197,7 @@ def density_band_proximal(
             return df(n, k, X) + X[n] - Q[n, k]
 
         # solve proximal problem
-        Q, c, _ = density_band(f, df_prox, P_min, P_max, dx, Q_init=Q)
+        Q, I_val, c, _ = density_band(f, df_prox, P_min, P_max, dx, Q_init=Q)
 
         # update residuals
         residuals = get_residuals(N, K, df, c, Q, P_min, P_max, dx)
@@ -206,7 +210,7 @@ def density_band_proximal(
                 % (nit_prox, np.sum(residuals), np.max(np.abs(np.sum(Q, 1)) * dx - 1))
             )
 
-    return Q, c, nit_prox
+    return Q, I_val, c, nit_prox
 
 
 def outliers(
@@ -232,6 +236,7 @@ def outliers(
 
     OUTPUT
         Q:              least favorable densities, NxK matrix
+        I_val:          Value of the functional evaluated at Q
         c:              clipping constants c0, c1
         nit:            number of iterations
     """
@@ -263,11 +268,11 @@ def outliers(
     while True:
         # solve density band model
         if proximal:
-            Q, c, nit = density_band_proximal(
+            Q, I_val, c, nit = density_band_proximal(
                 f, df, P_min, P_max, dx, verbose=verbose, Q_init=Q, tol=tol, itmax=itmax
             )
         else:
-            Q, c, nit = density_band(
+            Q, I_val, c, nit = density_band(
                 f, df, P_min, P_max, dx, verbose=verbose, Q_init=Q, tol=tol, itmax=itmax
             )
 
@@ -278,7 +283,7 @@ def outliers(
         else:
             break
 
-    return Q, c, nit
+    return Q, I_val, c, nit
 
 
 def outliers_proximal(
