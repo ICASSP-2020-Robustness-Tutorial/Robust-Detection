@@ -244,7 +244,7 @@ def outliers(
     N, K = P.shape
 
     # get outlier ratios
-    if hlp.is_nonnegative_scalar(eps):
+    if np.isscalar(eps):
         eps = np.ones(N) * eps
 
     if not np.all([0 <= eps[n] <= 1 for n in range(N)]):
