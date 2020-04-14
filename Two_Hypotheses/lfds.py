@@ -9,13 +9,12 @@ import robust_detection_helpers as hlp
 
 
 def density_band(
-    p_min,
-    p_max,
+    P_min,
+    P_max,
     dx,
     verbose=False,
     alpha=0.01,
-    q0_init=np.nan,
-    q1_init=np.nan,
+    Q_init=np.nan,
     order=np.inf,
     tol=1e-6,
     itmax=100
@@ -29,15 +28,14 @@ def density_band(
     vol. 64, no. 22, pp. 5875-5886, 15 Nov.15, 2016.
 
     INPUT
-        p_min:          2xK vector specifying the lower bounds
-        p_max:          2xK vector specifying the upper bounds
+        P_min:          2xK matrix specifying the lower bounds
+        P_max:          2xK matrix specifying the upper bounds
         dx:             grid size for numerical integraton
 
     OPTIONAL INPUT
         verbose:        display progress, defaults to false
         alpha:          regularization parameter, defaults to 0.0
-        q0_init:        initial guess for q0, defaults to uniform density
-        q1_init:        initial guess for q1, defaults to uniform density
+        Q_init:         2xK matrix, initial guess for q0, defaults to uniform density
         order:          vector norm used for convergence criterion, defaults to np.inf
         tol:            vector-norm tolerance of fixed-point, defaults to 1e-6
         itmax:          maximum number of iterations, defaults to 100
@@ -50,41 +48,25 @@ def density_band(
     """
 
     # sanity checks
-    if p_min.shape[0] == p_min.shape[0] == 2 and p_min.shape[1] == p_max.shape[1]:
-        K = p_min.shape[1]
-        p0_min = p_min[0, :]
-        p0_max = p_max[0, :]
-        p1_min = p_min[1, :]
-        p1_max = p_max[1, :]
+    if P_min.shape == P_min.shape:
+        N, K = np.shape(P_min)
     else:
-        raise ValueError("'p_min' and 'p_max' must be of size 2xK")
+        raise ValueError("'P_min' and 'P_max' must be of the same shape")
 
-    if not hlp.is_nonnegative_scalar(alpha):
+    for n in range(N):
+        if not hlp.is_valid_density_band(P_min[n, :], P_max[n, :], dx):
+            raise ValueError("Invalid density band.")
+
+    if not alpha >= 0:
         raise ValueError("The parameter 'alpha' must be a nonegative scalar")
 
-    if not hlp.is_valid_density_band(p0_min, p0_max, dx):
-        raise ValueError("Invalid density band under H0.")
+    # initialize lfds
+    Q = hlp.set_densities(Q_init, P_min, P_max, dx)
 
-    if not hlp.is_valid_density_band(p1_min, p1_max, dx):
-        raise ValueError("Invalid density band under H1.")
-
-    # user defined initialization for q0
-    if np.any(np.isnan(q0_init)):
-        q0_new = np.ones(K)/(K*dx)
-    else:
-        if np.all(q0_init >= 0.0) and q0_init.ndim == 1 and q0_init.size == K:
-            q0_new = q0_init
-        else:
-            raise ValueError("User supplied initialization for q0 is invalid.")
-
-    # user defined initialization for q1
-    if np.any(np.isnan(q1_init)):
-        q1_new = np.ones(K)
-    else:
-        if np.all(q1_init >= 0.0) and q1_init.ndim == 1 and q1_init.size == K:
-            q1_new = q1_init
-        else:
-            raise ValueError("User supplied initialization for q1 is invalid.")
+    # rename for easier reference
+    p0_min, p0_max = P_min[0, :], P_max[0, :]
+    p1_min, p1_max = P_min[1, :], P_max[1, :]
+    q0_new, q1_new = Q[0, :], Q[1, :]
 
     # initialize counters
     res = np.inf
@@ -150,17 +132,16 @@ def density_band(
     # log-likelihood ratio
     llr = np.log(q1 / q0)
 
-    return q0, q1, llr, c, nit
+    return np.vstack((q0, q1)), llr, c, nit
 
 
-def outliers(p0, p1, dx, eps, verbose=False):
+def outliers(P, dx, eps, verbose=False):
     """
     Get least favourable densities for two hypotheses under epsilon contamination
     uncertainty as a specail case of band uncertainty.
 
     INPUT
-        p0:             nominal density under H0, 1xK vector
-        p1:             nominal density under H1, 1xK vector
+        P:              nominal densities, 2xK vector
         dx:             grid size for numerical integraton
         eps:            outlier ration, can be a scalar or a 2-tuple (eps0, eps1)
 
@@ -168,45 +149,33 @@ def outliers(p0, p1, dx, eps, verbose=False):
         verbose:        display progress, defaults to false
 
     OUTPUT
-        q0, q1:         least favorable densities
+        Q:              least favorable densities, 2xK vector
         llr:            log-likelihood ratio of q1 and q0, log(q1/q0)
         c:              clipping constants c0, c1
         nit:            number of iterations
     """
 
     # sanity checks
-    if not np.all(p0 >= 0.0) or p0.ndim != 1:
-        raise ValueError("'p0' must be a nonnegative array.")
+    if not np.all(P >= 0.0):
+        raise ValueError("'P' must be a nonnegative matrix.")
 
-    if not np.all(p1 >= 0.0) or p1.ndim != 1:
-        raise ValueError("'p0' must be a nonnegative array.")
-
-    if p0.size == p1.size:
-        K = p0.size
-    else:
-        raise ValueError("'p0' and 'p1' need to be of the same size.")
+    N, K = P.shape
 
     # get outlier ratios
-    if hlp.is_nonnegative_scalar(eps):
+    if np.isscalar(eps):
         eps = eps, eps
 
-    if not hlp.is_nonnegative_scalar(eps[0]) or eps[0] > 1.0:
-        raise ValueError("outlier ratio 'eps0' must be between 0 and 1.")
-
-    if not hlp.is_nonnegative_scalar(eps[1]) or eps[1] > 1.0:
-        raise ValueError("outlier ratio 'eps1' must be between 0 and 1.")
+    for n in range(2):
+        if not 0.0 <= eps[n] <= 1.0:
+            raise ValueError("outlier ratio must be between 0 and 1.")
 
     # initialize bands corresponding to outlier model
-    p_min = np.zeros((2, K))
-    p_max = np.zeros((2, K))
-    p_min[0, :] = (1 - eps[0]) * p0
-    p_min[1, :] = (1 - eps[1]) * p1
-    p_max[0, :] = np.ones_like(p0) / dx
-    p_max[1, :] = np.ones_like(p1) / dx
+    P_min = np.vstack(((1 - eps[0]) * P[0, :], (1 - eps[1]) * P[1, :]))
+    P_max = np.ones_like(P) / dx
 
     # solve via density band algorithm
-    q0, q1, llr, c, _ = density_band(
-        p_min, p_max, dx, q0_init=p0, q1_init=p1, verbose=verbose
+    Q, llr, c, _ = density_band(
+        P_min, P_max, dx, verbose=verbose, Q_init=P
     )
 
-    return q0, q1, llr, c
+    return Q, llr, c

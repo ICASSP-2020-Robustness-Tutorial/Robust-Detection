@@ -47,7 +47,7 @@ def df(n, k, X):
 
 
 # denisty band model using regular algorithm
-Q, c, nit = mlfds.density_band(f, df, P_min, P_max, dx, verbose=True, Q_init=P)
+Q, c, nit = mlfds.density_band(f, df, P_min, P_max, dx, verbose=True)
 
 # plot lfds
 fig1, ax1 = plt.subplots()
@@ -81,11 +81,11 @@ legend = ax3.legend()
 
 # # # denisty band model using proximal algorithm
 # # Warning, this is slow!
-# Q, c, nit = mlfds.outliers_proximal(f, df, P, dx, 0.1, verbose=True)
+Q, c, nit = mlfds.outliers_proximal(f, df, P, dx, 0.1, verbose=True)
 
-# # plot lfds
-# fig4, ax4 = plt.subplots()
-# for n in range(N):
-#     ax4.plot(x, Q[n, :], label=f"$q_{n}$")
-# ax4.set_title('Outlier uncertainty - Proximal')
-# legend = ax4.legend()
+# plot lfds
+fig4, ax4 = plt.subplots()
+for n in range(N):
+    ax4.plot(x, Q[n, :], label=f"$q_{n}$")
+ax4.set_title('Outlier uncertainty - Proximal')
+legend = ax4.legend()

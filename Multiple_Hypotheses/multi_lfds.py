@@ -11,6 +11,35 @@ import robust_detection_helpers as hlp
 def density_band(
     f, df, P_min, P_max, dx, verbose=False, Q_init=np.nan, tol=1e-6, itmax=100,
 ):
+    """
+    Get least favourable densities for multiple hypotheses under density band
+    uncertainty. The least favorable densities minimize the f-dissimilarity defined
+    by the function f, with partial derivatives df. For details on how to define
+    f and df see 'example.py' and the paper
+
+    M. Fauß and A. M. Zoubir, "On the Minimization of Convex Functionals of
+    Probability Distributions Under Band Constraints," in IEEE Transactions on
+    Signal Processing, vol. 66, no. 6, pp. 1425-1437, March, 2018.
+
+    INPUT
+        f:              convex function that defines an f-dissimilarity
+        df:             partial derivative of f
+        P_min:          2xK matrix specifying the lower bounds
+        P_max:          2xK matrix specifying the upper bounds
+        dx:             grid size for numerical integraton
+
+    OPTIONAL INPUT
+        verbose:        display progress, defaults to false
+        Q_init:         2xK matrix, initial guess for q0, defaults to uniform density
+        tol:            vector-norm tolerance of fixed-point, defaults to 1e-6
+        itmax:          maximum number of iterations, defaults to 100
+
+    OUTPUT
+        Q:              least favorable densities, NxK matrix
+        c:              clipping constants c0, c1
+        nit:            number of iterations
+    """
+
     # sanity checks
     if P_min.shape == P_min.shape:
         N, K = np.shape(P_min)
@@ -22,7 +51,7 @@ def density_band(
             raise ValueError(f"Invalid density band under H{n}.")
 
     # initialize lfds
-    Q = set_densities(N, Q_init, P_min, P_max, dx)
+    Q = hlp.set_densities(Q_init, P_min, P_max, dx)
 
     # initialize clipping constants
     c, c_min, c_max = get_c(N, K, df, P_min, P_max)
@@ -102,6 +131,33 @@ def density_band_proximal(
     itmax=100,
     itmax_prox=50,
 ):
+    """
+    Get least favourable densities for multiple hypotheses under density band
+    uncertainty. The proximal version of the algorithm is more robust and works
+    for functions f that are not strictly convex. However, it is significantly
+    slower and should only be used with problems that the regular version fails
+    to solve.
+
+    INPUT
+        f:              convex function that defines an f-dissimilarity
+        df:             partial derivative of f
+        P_min:          2xK matrix specifying the lower bounds
+        P_max:          2xK matrix specifying the upper bounds
+        dx:             grid size for numerical integraton
+
+    OPTIONAL INPUT
+        verbose:        display progress, defaults to false
+        Q_init:         2xK matrix, initial guess for q0, defaults to uniform density
+        tol:            vector-norm tolerance of fixed-point, defaults to 1e-6
+        itmax:          maximum number of iterations, defaults to 100
+        itmax_prox:     maximum number of proximal iterations, defaults to 50
+
+    OUTPUT
+        Q:              least favorable densities, NxK matrix
+        c:              clipping constants c0, c1
+        nit:            number of iterations
+    """
+
     # sanity checks
     if P_min.shape == P_min.shape:
         N, K = np.shape(P_min)
@@ -109,7 +165,7 @@ def density_band_proximal(
         raise ValueError("'P_min' and 'P_max' must be of the same shape")
 
     # initialize lfds
-    Q = set_densities(N, Q_init, P_min, P_max, dx)
+    Q = hlp.set_densities(Q_init, P_min, P_max, dx)
 
     # initialize clipping constants
     c, c_min, c_max = get_c(N, K, df, P_min, P_max)
@@ -133,14 +189,17 @@ def density_band_proximal(
     # iteratively solve non-proximal problems with augmented df
     while np.sum(residuals) > tol and nit_prox < itmax_prox:
 
+        # define proximal objective
         def df_prox(n, k, X):
             return df(n, k, X) + X[n] - Q[n, k]
 
+        # solve proximal problem
         Q, c, _ = density_band(f, df_prox, P_min, P_max, dx, Q_init=Q)
 
         # update residuals
         residuals = get_residuals(N, K, df, c, Q, P_min, P_max, dx)
 
+        # display progress
         nit_prox += 1
         if verbose:
             print(
@@ -154,6 +213,30 @@ def density_band_proximal(
 def outliers(
     f, df, P, dx, eps, verbose=False, tol=1e-6, itmax=100, itmax_prox=50, proximal=False
 ):
+    """
+    Get least favourable densities for multiple hypotheses under outlier
+    uncertainty. This function calls the density band version internally
+
+        INPUT
+        f:              convex function that defines an f-dissimilarity
+        df:             partial derivative of f
+        P:              2xK matrix specifying the nominal densities
+        dx:             grid size for numerical integraton
+        eps:            contamination ratio, either scalar of of size N
+
+    OPTIONAL INPUT
+        verbose:        display progress, defaults to false
+        tol:            vector-norm tolerance of fixed-point, defaults to 1e-6
+        itmax:          maximum number of iterations, defaults to 100
+        itmax_prox:     maximum number of proximal iterations, defaults to 50
+        proximal:       use proximal version of the algorithm
+
+    OUTPUT
+        Q:              least favorable densities, NxK matrix
+        c:              clipping constants c0, c1
+        nit:            number of iterations
+    """
+
     # sanity checks
     if not np.all(P >= 0.0):
         raise ValueError("'P' must be a nonnegative matrix.")
@@ -172,13 +255,15 @@ def outliers(
     P_max = np.zeros((N, K))
     for n in range(N):
         P_min[n, :] = (1 - eps[n]) * P[n, :]
-        P_max = 2 * P + 0.1
+    P_max = 2 * P + 0.1
 
+    # define output outside the loop
     Q = P
     c = np.ones(K)
     nit = 0
 
     while True:
+        # solve density band model
         if proximal:
             Q, c, nit = density_band_proximal(
                 f, df, P_min, P_max, dx, verbose=verbose, Q_init=Q, tol=tol, itmax=itmax
@@ -188,6 +273,7 @@ def outliers(
                 f, df, P_min, P_max, dx, verbose=verbose, Q_init=Q, tol=tol, itmax=itmax
             )
 
+        # check if upper bound binds, increase if necessary
         if np.any(Q == P_max):
             P_max *= 2
             print("\nRe-running with adjusted upper bounds")
@@ -200,6 +286,12 @@ def outliers(
 def outliers_proximal(
     f, df, P, dx, eps, verbose=False, tol=1e-6, itmax=100, itmax_prox=50
 ):
+    """
+    Get least favourable densities for multiple hypotheses under outlier
+    uncertainty using the proximal algorithm. This is merely a wrapper around
+    'outlier' with the proximal parameter set to True.
+    """
+
     return outliers(
         f,
         df,
@@ -214,10 +306,9 @@ def outliers_proximal(
     )
 
 
+# invert partial derivative numerically, such that df(n, q) = c
 def df_inv(df, n, N, K, Q, pmin, pmax, c):
-
     qn = np.zeros(K)
-
     for k in np.arange(K):
         q = Q[:, k].reshape(N, 1)
 
@@ -241,6 +332,7 @@ def df_inv(df, n, N, K, Q, pmin, pmax, c):
     return qn
 
 
+# calculate residuals
 def get_residuals(N, K, df, c, Q, P_min, P_max, dx):
     residuals = np.zeros(N)
     for n in np.arange(N):
@@ -252,29 +344,7 @@ def get_residuals(N, K, df, c, Q, P_min, P_max, dx):
     return residuals
 
 
-def set_densities(N, Q_init, P_min, P_max, dx):
-    Q = np.zeros_like(P_min)
-    if not np.isscalar(Q_init):
-        for n in range(Q_init.shape[0]):
-            if np.any(np.isnan(Q_init[n, :])):
-                a = (1 / dx - np.sum(P_min[n, :])) / (
-                    np.sum(P_max[n, :]) - np.sum(P_min[n, :])
-                )
-                Q[n, :] = (1 - a) * P_min[n, :] + a * P_max[n, :]
-            else:
-                if np.all(Q_init[n, :] >= 0.0):
-                    Q[n, :] = Q_init[n, :]
-                else:
-                    raise ValueError(
-                        f"User supplied initialization for q{n} is invalid."
-                    )
-    else:
-        a = (1 / dx - np.sum(P_min, 1)) / (np.sum(P_max, 1) - np.sum(P_min, 1))
-        Q = (1 - a.reshape(N, 1)) * P_min + a.reshape(N, 1) * P_max
-
-    return Q
-
-
+# get inital c and bounds
 def get_c(N, K, df, P_min, P_max):
     c_min = np.array([np.min(df(n, np.arange(K), P_min)) for n in range(N)])
     c_max = np.array([np.max(df(n, np.arange(K), P_max)) for n in range(N)])
