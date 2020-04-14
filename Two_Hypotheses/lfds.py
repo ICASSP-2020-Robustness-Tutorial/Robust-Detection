@@ -53,9 +53,8 @@ def density_band(
     else:
         raise ValueError("'P_min' and 'P_max' must be of the same shape")
 
-    for n in range(N):
-        if not hlp.is_valid_density_band(P_min[n, :], P_max[n, :], dx):
-            raise ValueError("Invalid density band.")
+    if not hlp.is_valid_density_band(P_min, P_max, dx):
+        raise ValueError("Invalid density bands.")
 
     if not alpha >= 0:
         raise ValueError("The parameter 'alpha' must be a nonegative scalar")

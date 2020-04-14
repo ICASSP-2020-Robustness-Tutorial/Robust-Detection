@@ -46,9 +46,8 @@ def density_band(
     else:
         raise ValueError("'P_min' and 'P_max' must be of the same shape")
 
-    for n in range(N):
-        if not hlp.is_valid_density_band(P_min[n, :], P_max[n, :], dx):
-            raise ValueError(f"Invalid density band under H{n}.")
+    if not hlp.is_valid_density_band(P_min, P_max, dx):
+        raise ValueError("Invalid density bands")
 
     # initialize lfds
     Q = hlp.set_densities(Q_init, P_min, P_max, dx)
