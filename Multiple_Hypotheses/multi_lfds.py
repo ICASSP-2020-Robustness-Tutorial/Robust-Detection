@@ -3,7 +3,6 @@ import os
 
 import numpy as np
 from scipy import optimize
-from scipy.optimize import fsolve
 
 sys.path.append(os.path.abspath("../Helper_Functions"))
 import robust_detection_helpers as hlp
@@ -20,15 +19,13 @@ def density_band(
 
     for n in range(N):
         if not hlp.is_valid_density_band(P_min[n, :], P_max[n, :], dx):
-            raise ValueError("Invalid density band under H%d." % n)
+            raise ValueError(f"Invalid density band under H{n}.")
 
     # initialize lfds
     Q = set_densities(N, Q_init, P_min, P_max, dx)
 
     # initialize clipping constants
-    c_min = np.array([np.min(df(n, np.arange(K), P_min)) for n in range(N)]) - 0.1
-    c_max = np.array([np.max(df(n, np.arange(K), P_max)) for n in range(N)]) + 0.1
-    c = (c_min + c_max) / 2
+    c, c_min, c_max = get_c(N, K, df, P_min, P_max)
 
     # initialize residuals
     residuals = get_residuals(N, K, df, c, Q, P_min, P_max, dx)
@@ -115,9 +112,7 @@ def density_band_proximal(
     Q = set_densities(N, Q_init, P_min, P_max, dx)
 
     # initialize clipping constants
-    c_min = np.array([np.min(df(n, np.arange(K), P_min)) for n in range(N)]) - 0.1
-    c_max = np.array([np.max(df(n, np.arange(K), P_max)) for n in range(N)]) + 0.1
-    c = (c_min + c_max) / 2
+    c, c_min, c_max = get_c(N, K, df, P_min, P_max)
 
     # initialize residuals
     residuals = get_residuals(N, K, df, c, Q, P_min, P_max, dx)
@@ -233,7 +228,7 @@ def df_inv(df, n, N, K, Q, pmin, pmax, c):
                 q_new = np.vstack((q[:-1], qnk))
             else:
                 q_new = np.vstack((q[:n], qnk))
-                q_new = np.vstack((q_new, q[n + 1 :]))
+                q_new = np.vstack((q_new, q[n + 1:]))
             return df(n, k, q_new) - c
 
         if func(pmin[k]) > 0.0:
@@ -241,7 +236,7 @@ def df_inv(df, n, N, K, Q, pmin, pmax, c):
         elif func(pmax[k]) < 0.0:
             qn[k] = pmax[k]
         else:
-            qn[k] = optimize.brentq(func, pmin[k], pmax[k])  # fsolve(func, q[n])
+            qn[k] = optimize.brentq(func, pmin[k], pmax[k])
 
     return qn
 
@@ -271,10 +266,17 @@ def set_densities(N, Q_init, P_min, P_max, dx):
                     Q[n, :] = Q_init[n, :]
                 else:
                     raise ValueError(
-                        "User supplied initialization for q%d is invalid." % n
+                        f"User supplied initialization for q{n} is invalid."
                     )
     else:
         a = (1 / dx - np.sum(P_min, 1)) / (np.sum(P_max, 1) - np.sum(P_min, 1))
         Q = (1 - a.reshape(N, 1)) * P_min + a.reshape(N, 1) * P_max
 
     return Q
+
+
+def get_c(N, K, df, P_min, P_max):
+    c_min = np.array([np.min(df(n, np.arange(K), P_min)) for n in range(N)])
+    c_max = np.array([np.max(df(n, np.arange(K), P_max)) for n in range(N)])
+
+    return (c_min + c_max) / 2, c_min - 0.1, c_max + 0.1

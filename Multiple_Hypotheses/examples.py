@@ -18,8 +18,8 @@ p2 = norm.pdf(x, 2, 2)
 p3 = norm.pdf(x, 0.0, 1)
 
 P = np.stack((p1, p2, p3))
-Pmin = 0.8*P
-Pmax = 1.2*P
+P_min = 0.8*P
+P_max = 1.2*P
 
 # Choose objective function as weighted sum of KL devergences
 a = np.array([0.5, 0.5])
@@ -40,13 +40,14 @@ def df(n, k, X):
     if n == 2:
         return 1 + a[0]*np.log(X[2]/X[0]) + a[1]*np.log(X[2]/X[1])
     else:
-        raise ValueError("Invalid index n = %d." % n)
+        raise ValueError(f"Invalid index n = {n}.")
+
 
 # Get lfds
 
 
 # denisty band model using regular algorithm
-Q, c, nit = mlfds.density_band(f, df, Pmin, Pmax, dx, verbose=True)
+Q, c, nit = mlfds.density_band(f, df, P_min, P_max, dx, verbose=True, Q_init=P)
 
 # plot lfds
 fig1, ax1 = plt.subplots()
@@ -57,7 +58,7 @@ legend = ax1.legend()
 
 
 # denisty band model using proximal algorithm
-Q, c, nit = mlfds.density_band_proximal(f, df, Pmin, Pmax, dx, verbose=True)
+Q, c, nit = mlfds.density_band_proximal(f, df, P_min, P_max, dx, verbose=True)
 
 # plot lfds
 fig2, ax2 = plt.subplots()
@@ -76,6 +77,7 @@ for n in range(N):
     ax3.plot(x, Q[n, :], label=f"$q_{n}$")
 ax3.set_title('Outlier uncertainty - Regular')
 legend = ax3.legend()
+
 
 # # # denisty band model using proximal algorithm
 # # Warning, this is slow!
