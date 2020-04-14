@@ -1,6 +1,6 @@
 % Example for least favorable densities under band uncertainty
 
-% support
+% Sample space
 dx = 0.01;
 w = -8:dx:8;
 

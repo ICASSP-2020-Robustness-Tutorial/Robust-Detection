@@ -251,7 +251,6 @@ def outliers(
 
     # initialize bands corresponding to outlier model
     P_min = np.zeros((N, K))
-    P_max = np.zeros((N, K))
     for n in range(N):
         P_min[n, :] = (1 - eps[n]) * P[n, :]
     P_max = 2 * P + 0.1
