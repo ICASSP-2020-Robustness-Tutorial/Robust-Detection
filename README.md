@@ -2,9 +2,9 @@
 
 This repository provides algorithms for calculating **least favorable densities (LFDs)** that can be used to implement minimax robust detectors. It is split into two main categories, namely LFDs for two hypotheses (binary) detection and LFDs for multi-hypotheses (m-ary) detection.
 
-The uncertainty model used here is the **density band model**, which restricts feasible densities to be bounded from above and below. That is
+The uncertainty model used here is the **density band model**, which restricts feasible densities to be bounded from above and below. That is,
 
-<img src="http://latex.codecogs.com/svg.latex?p'(x) \leq p(x) \leq p''(x)" border="0"/>
+<img src="http://latex.codecogs.com/svg.latex?{p'(x) \leq p(x) \leq p''(x)}" border="0"/>
 
 where *p* denotes the density function and *p'*, *p''* its lower and upper bound, respectively. The epsilon-contamination model (outlier model) is included as a special case. 
 
