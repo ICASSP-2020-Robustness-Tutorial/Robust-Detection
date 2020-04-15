@@ -4,9 +4,9 @@ This repository provides algorithms for calculating **least favorable densities 
 
 The uncertainty model used here is the **density band model**, which restricts feasible densities to be bounded from above and below. That is
 
-<img src="http://latex.codecogs.com/gif.latex?1+sin(x)" border="0"/>
+<img src="http://latex.codecogs.com/gif.latex?p'(x) \leq p(x) \leq p''(x)" border="0"/>
 
-where $p$ denotes the density function and $p', p''$ its lower and upper bound, respectively. The $\varepsilon$-contamination model (outlier model) is included as a special case. 
+where *p* denotes the density function and *p'*, *p''* its lower and upper bound, respectively. The epsilon-contamination model (outlier model) is included as a special case. 
 
 For the two-hypotheses case, the LFDs are independent of the cost funtion and the detection threshold. That is, they joinitly minimize all f-divergences. Hence, the LFDs in the two-hypotheses only depend on the uncertainty model. The repository provides Python and MATLAB implementations of an efficient algorithm for calculating these LFDs given upper and lower density bounds.
 
