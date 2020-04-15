@@ -55,12 +55,15 @@ function [Q, I, residuals, c, nit] = multi_lfds_density_band(f, df, f_param, P_m
 %
 % See the examples for how to define f and df.
 
+% add path to helper functions
+addpath ../Helper_Functions
+
 % initialization
 [verbose, skip_sanity_check, Q, tol, itmax] = initialize_bands(P_min, P_max, dw, nargin-6, varargin);
 
 % sanity checks
 if ~skip_sanity_check
-    sanity_check_bands(P_min, P_max, dw);
+    check_density_bands(P_min, P_max, dw);
 end
 
 [N, K] = size(P_min);

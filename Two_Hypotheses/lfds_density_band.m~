@@ -27,9 +27,8 @@ function [Q, llr, c, nit] = lfds_density_band(P_min, P_max, dx, varargin)
 
 % add path to helper functions
 addpath ../Helper_Functions
-
+verbose = true;
 % default values
-verbose = false;
 alpha = 0.0;
 Q_init = NaN;
 tol = 1e-6;
@@ -42,46 +41,41 @@ if ~is_valid_density_band(P_min, P_max, dx)
     error("Invalid density bands.");
 end
 
-% verbosity
-if nargin >= 4 && ~isempty(varargin{1})
-    verbose = varargin{1};
-end
-
 % user defined alpha
-if nargin >= 5 && ~isempty(varargin{2})
-    if varargin{2} >= 0
-        alpha = varargin{2};
+if nargin >= 4 && ~isempty(varargin{1})
+    if varargin{1} >= 0
+        alpha = varargin{1};
     else
         error("'alpha' must be a nonnegative scalar.");
     end
 end
 
 % user defined Q
-if nargin >= 6 && ~isempty(varargin{3})
-    Q_init = varargin{3};
+if nargin >= 5 && ~isempty(varargin{2})
+    Q_init = varargin{2};
 end
 
 % user defined tolerance
-if nargin >= 7 && ~isempty(varargin{4})
-    if varargin{4} > 0
-        tol = varargin{4};
+if nargin >= 7 && ~isempty(varargin{3})
+    if varargin{3} > 0
+        tol = varargin{3};
     else
         error('Tolerance must be a positive scalar.');
     end
 end
 
 % user defined number of iterations
-if nargin >= 8 && ~isempty(varargin{5})
-    if varargin{5} > 0
-        itmax = varargin{5};
+if nargin >= 6 && ~isempty(varargin{4})
+    if varargin{4} > 0
+        itmax = varargin{4};
     else
         error('Maximum number of iterations must be a positive scalar.');
     end
 end
 
 % user defined vector norm
-if nargin >= 9 && ~isempty(varargin{6})
-    order = varargin{6};
+if nargin >= 8 && ~isempty(varargin{5})
+    order = varargin{5};
 end
 
 % initialize lfds

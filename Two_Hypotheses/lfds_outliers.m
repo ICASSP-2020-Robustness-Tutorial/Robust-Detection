@@ -1,52 +1,47 @@
-function [q0, q1, llr, c] = lfds_outliers(p0, p1, dx, eps)
-% Get least favourable densities for two hypotheses under epsilon contamination
-% uncertainty as a specail case of band uncertainty.
-% 
+function [Q, llr, c, nit] = lfds_outliers(P, dx, eps, varargin)
+% Get least favourable densities for two hypotheses under epsilon
+% contamination uncertainty (outliers). For details see:
+%
+% M. Fauß and A. M. Zoubir, "Old Bands, New Tracks—Revisiting the Band Model for Robust Hypothesis
+% Testing," in IEEE Transactions on Signal Processing, vol. 64, no. 22, pp. 5875-5886, 15 Nov.15, 2016.
+%
 % INPUT
-%      p0:             nominal density under H0, 1xK vector
-%      p1:             nominal density under H1, 1xK vector
-%      dx:             grid size for numerical integraton
-%      eps:            outlier ration, can be a scalar or a 2-tuple (eps0, eps1)
-% 
+%   P:              nominal densities, 2xK matrix
+%   dx:             grid size for numerical integraton 
+%   eps:            outlier ratio, can be a scalar or a vector
+%
+% varargin
+% | {1}:            display progress, defaults to false
+% | {2}:            regularization parameter, defaults to 0.0
+% | {3}:            initial guess for Q, defaults to weighted sum of lower
+%                   and upper bound  
+% | {4}:            tolerance of fixed-point in terms of sup-norm, defaults to 1e-6
+% | {5}:            maximum number of iterations, defaults to 100
+% | {6}:            order of vector norm used for convergence criterion, defaults to Inf   
+%
 % OUTPUT
-%      q0, q1:         least favorable densities
-%      llr:            log-likelihood ratio of q1 and q0, log(q1/q0)
-%      c:              clipping constants c0, c1
-%      nit:            number of iterations
+%   Q:              least favorable densities
+%   llr:            log-likelihood ratio of q1 and q0, log(q1/q0)
+%   c:              clipping constants c0, c1
+%   nit:            number of iterations
 
-% sanity checks
-if ~is_nonnegative_vector(p0)
-    error("'p0' must be a nonnegative array.");
-end
+% add path to helper functions
+addpath ../Helper_Functions
 
-if ~is_nonnegative_vector(p1)
-    error("'p1' must be a nonnegative array.");
-end
-
-if length(p0) == length(p1)
-    K = length(p0);
-else
-    error("'p0' and 'p1' need to be of the same size.")
-end
+[N, K] = size(P);
 
 % get outlier ratios
-if is_nonnegative_scalar(eps)
-    eps = [eps, eps];
+if isscalar(eps)
+    eps = eps*ones(N, 1);
 end
 
-if ~is_nonnegative_scalar(eps(1)) || eps(1) > 1.0
-    error("outlier ratio 'eps0' must be between 0 and 1.")
-end
-
-if ~is_nonnegative_scalar(eps(2)) || eps(2) > 1.0
-    error("outlier ratio 'eps1' must be between 0 and 1.")
+if any(eps < 0) || any(eps > 1)
+    error("outlier ratio must be between 0 and 1.")
 end
 
 % initialize bands corresponding to outlier model
-p_min(1, :) = (1-eps(1)) * p0;
-p_min(2, :) = (1-eps(2)) * p1;
-p_max(1, :) = ones(1, K)/dx;
-p_max(2, :) = ones(1, K)/dx;
+P_min = (1-repmat(eps(:), 1, K)) .* P;
+P_max = ones(N, K)/dx;
 
 % solve via density band algorithm
-[q0, q1, llr, c] = lfds_density_band(p_min, p_max, dx, 0.0, p0, p1);
+[Q, llr, c] = lfds_density_band(P_min, P_max, dx, varargin{:});

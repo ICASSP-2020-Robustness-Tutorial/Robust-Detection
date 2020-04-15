@@ -29,6 +29,9 @@ function [Q, I, residuals, c, nit_prox] = multi_lfds_outlier_proximal(f, df, f_p
 %     c:            N dim. vector of derivative thresholds
 %     nit:          Number of iterations
 
+% add path to helper functions
+addpath ../Helper_Functions
+
 [N, K] = size(P);
 
 % get outlier ratios

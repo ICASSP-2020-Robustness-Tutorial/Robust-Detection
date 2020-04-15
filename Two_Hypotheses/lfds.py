@@ -4,7 +4,7 @@ import os
 import numpy as np
 from numpy import linalg as la
 
-sys.path.append(os.path.abspath("../../Helper_Functions"))
+sys.path.append(os.path.abspath("../Helper_Functions"))
 import robust_detection_helpers as hlp
 
 
@@ -17,7 +17,7 @@ def density_band(
     Q_init=np.nan,
     order=np.inf,
     tol=1e-6,
-    itmax=100
+    itmax=100,
 ):
     """
     Get least favourable densities for two hypotheses under density band uncertainty
@@ -36,19 +36,19 @@ def density_band(
         verbose:        display progress, defaults to false
         alpha:          regularization parameter, defaults to 0.0
         Q_init:         2xK matrix, initial guess for q0, defaults to uniform density
-        order:          vector norm used for convergence criterion, defaults to np.inf
         tol:            vector-norm tolerance of fixed-point, defaults to 1e-6
         itmax:          maximum number of iterations, defaults to 100
+        order:          vector norm used for convergence criterion, defaults to np.inf
 
     OUTPUT
-        q0, q1:         least favorable densities
+        Q:              least favorable densities
         llr:            log-likelihood ratio of q1 and q0, log(q1/q0)
         c:              clipping constants c0, c1
         nit:            number of iterations
     """
 
     # sanity checks
-    if P_min.shape == P_min.shape:
+    if P_min.shape == P_max.shape:
         N, K = np.shape(P_min)
     else:
         raise ValueError("'P_min' and 'P_max' must be of the same shape")
@@ -134,10 +134,24 @@ def density_band(
     return np.vstack((q0, q1)), llr, c, nit
 
 
-def outliers(P, dx, eps, verbose=False):
+def outliers(
+    P,
+    dx,
+    eps,
+    verbose=False,
+    alpha=0.01,
+    Q_init=np.nan,
+    tol=1e-6,
+    itmax=100,
+    order=np.inf,
+):
     """
     Get least favourable densities for two hypotheses under epsilon contamination
-    uncertainty as a specail case of band uncertainty.
+    uncertainty. For details see:
+
+    M. Fauß and A. M. Zoubir, "Old Bands, New Tracks—Revisiting the Band Model for
+    Robust Hypothesis Testing," in IEEE Transactions on Signal Processing,
+    vol. 64, no. 22, pp. 5875-5886, 15 Nov.15, 2016.
 
     INPUT
         P:              nominal densities, 2xK vector
@@ -146,9 +160,14 @@ def outliers(P, dx, eps, verbose=False):
 
     OPTIONAL INPUT
         verbose:        display progress, defaults to false
+        alpha:          regularization parameter, defaults to 0.0
+        Q_init:         2xK matrix, initial guess for q0, defaults to uniform density
+        tol:            vector-norm tolerance of fixed-point, defaults to 1e-6
+        itmax:          maximum number of iterations, defaults to 100
+        order:          vector norm used for convergence criterion, defaults to np.inf
 
     OUTPUT
-        Q:              least favorable densities, 2xK vector
+        Q:              least favorable densities
         llr:            log-likelihood ratio of q1 and q0, log(q1/q0)
         c:              clipping constants c0, c1
         nit:            number of iterations
@@ -173,8 +192,14 @@ def outliers(P, dx, eps, verbose=False):
     P_max = np.ones_like(P) / dx
 
     # solve via density band algorithm
-    Q, llr, c, _ = density_band(
-        P_min, P_max, dx, verbose=verbose, Q_init=P
+    return density_band(
+        P_min,
+        P_max,
+        dx,
+        verbose,
+        alpha=alpha,
+        Q_init=Q_init,
+        tol=tol,
+        itmax=itmax,
+        order=order,
     )
-
-    return Q, llr, c

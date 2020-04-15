@@ -21,7 +21,8 @@ LFDs under density band uncertainty
 """
 
 # bands
-P_min, P_max = 0.8 * P, 1.2 * P
+P_min = 0.8 * P
+P_max = 1.2 * P
 
 # solve for LFDs
 Q, llr, c, nit = lfds.density_band(P_min, P_max, dx, verbose=True)
@@ -46,7 +47,7 @@ LFDs under 10% and 15% contamination (outliers)
 eps = 0.1, 0.15
 
 # solve for LFDs
-Q, llr, c = lfds.outliers(P, dx, eps, verbose=True)
+Q, llr, c, nit = lfds.outliers(P, dx, eps, verbose=True, Q_init=P)
 
 # plot lfds
 fig3, ax3 = plt.subplots()

@@ -33,13 +33,12 @@ def set_densities(Q_init, P_min, P_max, dx):
                     np.sum(P_max[n, :]) - np.sum(P_min[n, :])
                 )
                 Q[n, :] = (1 - a) * P_min[n, :] + a * P_max[n, :]
+            elif np.all(Q_init[n, :] >= 0.0):
+                Q[n, :] = Q_init[n, :]
             else:
-                if np.all(Q_init[n, :] >= 0.0):
-                    Q[n, :] = Q_init[n, :]
-                else:
-                    raise ValueError(
-                        f"User supplied initialization for q{n} is invalid."
-                    )
+                raise ValueError(
+                    f"User supplied initialization for q{n} is invalid."
+                )
     else:
         a = (1 / dx - np.sum(P_min, 1)) / (np.sum(P_max, 1) - np.sum(P_min, 1))
         Q = (1 - a.reshape(N, 1)) * P_min + a.reshape(N, 1) * P_max

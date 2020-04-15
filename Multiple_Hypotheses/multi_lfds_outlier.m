@@ -29,6 +29,9 @@ function [Q, I, residuals, c, nit] = multi_lfds_outlier(f, df, f_param, P, dw, e
 %     c:            N dim. vector of derivative thresholds
 %     nit:          Number of iterations
 
+% add path to helper functions
+addpath ../Helper_Functions
+
 [N, K] = size(P);
 
 % get outlier ratios

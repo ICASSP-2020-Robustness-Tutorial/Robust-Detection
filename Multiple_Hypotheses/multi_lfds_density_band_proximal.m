@@ -53,6 +53,9 @@ function [Q, I, residuals, c, nit_prox] = multi_lfds_density_band_proximal(f, df
 %
 % See the examples for how to define f and df.
 
+% add path to helper functions
+addpath ../Helper_Functions
+
 % initialization
 [verbose, skip_sanity_check, Q, tol, itmax, itmax_prox] = initialize_bands(P_min, P_max, dw, nargin-6, varargin);
 
