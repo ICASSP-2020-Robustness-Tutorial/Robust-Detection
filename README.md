@@ -10,6 +10,6 @@ where *p* denotes the density function and *p'*, *p''* its lower and upper bound
 
 For the two-hypotheses case, the LFDs are independent of the cost funtion and the detection threshold. That is, they joinitly minimize all f-divergences. Hence, the LFDs in the two-hypotheses only depend on the uncertainty model. The repository provides Python and MATLAB implementations of an efficient algorithm for calculating these LFDs given upper and lower density bounds.
 
-For the multi-hypotheses case this independence no longer holds. Hence, the LDSs are calculated for a particular cost function and threshold. The latter translate into an f-dissimilarity, which is then minimized under density band constraints. The repositoy provides Python, MATLAB and C implementations for an efficient algorithm for this task.
+For the multi-hypotheses case this independence no longer holds. Hence, the LFDs are calculated for a particular cost function and threshold. The latter translate into an f-dissimilarity, which is then minimized under density band constraints. The repositoy provides Python, MATLAB and C implementations for an efficient algorithm for this task.
 
 
