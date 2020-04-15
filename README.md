@@ -4,7 +4,7 @@ This repository provides algorithms for calculating **least favorable densities 
 
 The uncertainty model used here is the **density band model**, which restricts feasible densities to be bounded from above and below. That is
 
-<img src="https://latex.codecogs.com/gif.latex?p'(x) \leq p(x) \leq p''(x)" /> 
+<img src=" latex.codecogs.com/png.latex?p'(x) \leq p(x) \leq p''(x)" /> 
 
 where $p$ denotes the density function and $p', p''$ its lower and upper bound, respectively. The $\varepsilon$-contamination model (outlier model) is included as a special case. 
 
