@@ -1,6 +1,8 @@
 find_library(MATH_LIB m)
 find_library(GSL_LIB gsl)
-find_library(BLAS_LIB openblas)
+
+set(BLA_STATIC ON)
+find_package(BLAS)
 
 add_library(cfpd SHARED cfpd_algorithm.c
                         cfpd_opt_problem.c
