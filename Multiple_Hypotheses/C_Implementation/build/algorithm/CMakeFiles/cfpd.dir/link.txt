@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC   -shared -Wl,-soname,libcfpd.so -o libcfpd.so CMakeFiles/cfpd.dir/cfpd_algorithm.c.o CMakeFiles/cfpd.dir/cfpd_opt_problem.c.o CMakeFiles/cfpd.dir/cfpd_opt_problem_checks.c.o CMakeFiles/cfpd.dir/cfpd_errors.c.o CMakeFiles/cfpd.dir/cfpd_helper_functions.c.o  -lm /usr/lib64/libgsl.so /usr/lib64/libopenblas.so 
