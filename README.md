@@ -1,6 +1,10 @@
 # Robust Detection
 
-This repository provides algorithms for calculating **least favorable densities (LFDs)** that can be used to implement minimax robust detectors. It is split into two main categories, namely LFDs for two hypotheses (binary) detection and LFDs for multi-hypotheses (m-ary) detection.
+This repository provides algorithms for calculating **least favorable densities (LFDs)** that can be used to implement minimax robust detectors. It is split into two main categories, namely LFDs for two hypotheses (binary) detection and LFDs for multi-hypotheses (m-ary) detection. The corresponding algorithms are detailed in 
+
+[1] M. Fauß and A. M. Zoubir, "Old Bands, New Tracks—Revisiting the Band Model for Robust Hypothesis Testing," in IEEE Transactions on Signal Processing, vol. 64, no. 22, pp. 5875-5886, Nov, 2016.
+
+[2] M. Fauß and A. M. Zoubir, "On the Minimization of Convex Functionals of Probability Distributions Under Band Constraints," in IEEE Transactions on Signal Processing, vol. 66, no. 6, pp. 1425-1437, March, 2018.
 
 The uncertainty model used here is the **density band model**, which restricts feasible densities to be bounded from above and below. That is,
 

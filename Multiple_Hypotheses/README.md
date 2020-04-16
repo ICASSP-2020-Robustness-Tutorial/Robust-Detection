@@ -6,7 +6,7 @@ Calculate LFDs for a multiple-hypotheses test under density band and epsilon con
 
 The algorithm solves a discrete version of the optimization problem
 
-$min_{p_0, \ldots, p_1} \int f(p_0(x), ..., p_N(x)) dx$,
+$min_{p_0, ..., p_1} \int f(p_0(x), ..., p_N(x)) dx$,
 
 where $f \colon \mathbb{R}^{K+1} \to \mathbb{R}$ is a convex and homogeneous function, subject to the density band constraints
 
