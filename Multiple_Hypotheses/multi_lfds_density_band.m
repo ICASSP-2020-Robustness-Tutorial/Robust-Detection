@@ -1,6 +1,6 @@
-function [Q, I, residuals, c, nit] = multi_lfds_density_band(f, df, f_param, P_min, P_max, dw, varargin)
-% Get least favourable densities for multiple hypotheses under density band
-% uncertainty. The least favorable densities minimize the f-dissimilarity defined
+function [Q, I, res, c, nit] = multi_lfds_density_band(f, df, f_param, P_min, P_max, dx, varargin)
+% Get least favourable densities for multiple hypotheses under density band uncertainty. 
+% The least favorable densities minimize the f-dissimilarity defined
 % by the function f, with partial derivatives df. For details see
 % 
 % M. Fauß and A. M. Zoubir, "On the Minimization of Convex Functionals of
@@ -21,13 +21,10 @@ function [Q, I, residuals, c, nit] = multi_lfds_density_band(f, df, f_param, P_m
 %     varargin
 %     | {1}:            verbose {true, false}. Turn display of progress on or off.
 %     |                 Defaults to true
-%     | {2}:            skip sanity checks {true, false}. Turn sanity checks of the
-%     |                 input on or off. Defaults to false.
-%     | {3}:            initial lfds, K x N dim. matrix. Provide initial densities for
+%     | {2}:            initial lfds, K x N dim. matrix. Provide initial densities for
 %     |                 the algorithm. 
-%     | {4}:            tolerance, defaults to 1e-6.
-%     | {5}:            maximum number of iterations, defaults to 100.
-%     | {6}:            maximum number of proximal iterations, defaults to 50.
+%     | {3}:            tolerance, defaults to 1e-6.
+%     | {4}:            maximum number of iterations, defaults to 100.
 %
 % OUTPUT
 %     Q:                K x N dim. matrix. least favorable distributions
@@ -58,21 +55,56 @@ function [Q, I, residuals, c, nit] = multi_lfds_density_band(f, df, f_param, P_m
 % add path to helper functions
 addpath ../Helper_Functions
 
-% initialization
-[verbose, skip_sanity_check, Q, tol, itmax] = initialize_bands(P_min, P_max, dw, nargin-6, varargin);
+% default values
+verbose = false;
+Q_init = NaN;
+tol = 1e-6;
+itmax = 100;
+
+% get dimensions
+[N, K] = size(P_min);
 
 % sanity checks
-if ~skip_sanity_check
-    check_density_bands(P_min, P_max, dw);
+if ~is_valid_density_band(P_min, P_max, dx)
+    error("Invalid density bands.");
 end
 
-[N, K] = size(P_min);
+% verbosity
+if nargin >= 7 && ~isempty(varargin{1})
+    verbose = varargin{1};
+end
+
+% user defined Q
+if nargin >= 8 && ~isempty(varargin{2})
+    Q_init = varargin{2};
+end
+
+% user defined tolerance
+if nargin >= 9 && ~isempty(varargin{3})
+    if varargin{3} > 0
+        tol = varargin{3};
+    else
+        error('Tolerance must be a positive scalar.');
+    end
+end
+
+% user defined number of iterations
+if nargin >= 10 && ~isempty(varargin{4})
+    if varargin{4} > 0
+        itmax = varargin{4};
+    else
+        error('Maximum number of iterations must be a positive scalar.');
+    end
+end
+
+% initialize lfds
+Q = set_densities(Q_init, P_min, P_max, dx);
 
 % get bounds for c
 [c, c_min, c_max] = get_c(N, K, df, f_param, P_min, P_max);
 
 % update residuals
-residuals = update_residuals(N, K, df, Q, f_param, P_max, P_min, dw, c);
+res = get_residuals(N, K, df, Q, f_param, P_max, P_min, dx, c);
 
 % display progress
 nit = 0;
@@ -80,38 +112,33 @@ if verbose
     fprintf("\n");
     fprintf("Iteration | Residual Objective | Residual Densities\n");
     fprintf("----------|--------------------|-------------------\n");
-    fprintf("%9d |     %.4e     |     %.4e\n", nit, sum(residuals), max(abs(sum(Q,2))*dw-1));
+    fprintf("%9d |     %.4e     |     %.4e\n", nit, sum(res), max(abs(sum(Q,2))*dx-1));
 end
 
 
-while sum(residuals) > tol && nit < itmax
+while sum(res) > tol && nit < itmax
       
     % select coordinate with largest residual
-    [~, n] = max(residuals);
+    [~, n] = max(res);
     
     % determine c(n)
-    func = @(c) sum( get_idf(df, n, K, Q, f_param, P_min(n,:), P_max(n,:), c) )*dw - 1;
+    func = @(c) sum( get_idf(df, n, K, Q, f_param, P_min(n,:), P_max(n,:), c) )*dx - 1;
     c(n) = fzero(func, [c_min(n), c_max(n)]);
     Q(n,:) = get_idf(df, n, K, Q, f_param, P_min(n,:), P_max(n,:), c(n));
     
     % update residuals
-    residuals = update_residuals(N, K, df, Q, f_param, P_max, P_min, dw, c);
+    res = get_residuals(N, K, df, Q, f_param, P_max, P_min, dx, c);
     
     % display progress
     nit = nit+1;
     if verbose
-        fprintf("%9d |     %.4e     |     %.4e\n", nit, sum(residuals), max(abs(sum(Q,2))*dw-1));
+        fprintf("%9d |     %.4e     |     %.4e\n", nit, sum(res), max(abs(sum(Q,2))*dx-1));
     end
     
 end
 
-% final linebreak
-if verbose
-    fprintf('\n'); 
-end
-
 % evaluate objective function
-I = sum(f(1:K, Q, f_param))*dw;
+I = sum(f(1:K, Q, f_param))*dx;
 
 
 % get inverse function of partial derivative of f
@@ -127,16 +154,3 @@ for k=1:K
         qn(k) = fzero(func, [pmin(k), pmax(k)]);
     end
 end
-
-
-% get inital c and bounds
-function [c, c_min, c_max] = get_c(N, K, df, f_param, P_min, P_max)
-    c_min = zeros(N, 1); 
-    c_max = zeros(N, 1);
-    for n=1:N
-        c_min(n) = min(df(n, 1:K, P_min(:,1:K), f_param));
-        c_max(n) = max(df(n, 1:K, P_max(:,1:K), f_param));
-    end
-    c = (c_min+c_max)/2;
-    c_min = c_min - 0.1;
-    c_max = c_max + 0.1;

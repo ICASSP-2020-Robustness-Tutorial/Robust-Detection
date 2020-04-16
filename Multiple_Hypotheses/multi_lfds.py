@@ -41,12 +41,10 @@ def density_band(
         nit:            number of iterations
     """
 
-    # sanity checks
-    if P_min.shape == P_min.shape:
-        N, K = np.shape(P_min)
-    else:
-        raise ValueError("'P_min' and 'P_max' must be of the same shape")
+    # get dimensions
+    N, K = np.shape(P_min)
 
+    # sanity checks
     if not hlp.is_valid_density_band(P_min, P_max, dx):
         raise ValueError("Invalid density bands")
 
@@ -197,7 +195,7 @@ def density_band_proximal(
             return df(n, k, X) + X[n] - Q[n, k]
 
         # solve proximal problem
-        Q, I_val, c, _ = density_band(f, df_prox, P_min, P_max, dx, Q_init=Q)
+        Q, I_val, c, _ = density_band(f, df_prox, P_min, P_max, dx, Q_init=Q, tol=tol, itmax=itmax)
 
         # update residuals
         residuals = get_residuals(N, K, df, c, Q, P_min, P_max, dx)

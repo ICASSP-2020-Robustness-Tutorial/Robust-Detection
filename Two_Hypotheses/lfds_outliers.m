@@ -28,6 +28,7 @@ function [Q, llr, c, nit] = lfds_outliers(P, dx, eps, varargin)
 % add path to helper functions
 addpath ../Helper_Functions
 
+% get dimensions
 [N, K] = size(P);
 
 % get outlier ratios

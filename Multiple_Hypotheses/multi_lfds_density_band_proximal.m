@@ -1,4 +1,4 @@
-function [Q, I, residuals, c, nit_prox] = multi_lfds_density_band_proximal(f, df, f_param, P_min, P_max, dw, varargin)
+function [Q, I, res, c, nit_prox] = multi_lfds_density_band_proximal(f, df, f_param, P_min, P_max, dx, varargin)
 % Get least favourable densities for multiple hypotheses under density band
 % uncertainty using the proximal version of the algorithm detailed in
 % 
@@ -19,13 +19,11 @@ function [Q, I, residuals, c, nit_prox] = multi_lfds_density_band_proximal(f, df
 %     varargin
 %     | {1}:            verbose {true, false}. Turn display of progress on or off.
 %     |                 Defaults to true
-%     | {2}:            skip sanity checks {true, false}. Turn sanity checks of the
-%     |                 input on or off. Defaults to false.
-%     | {3}:            initial lfds, K x N dim. matrix. Provide initial densities for
+%     | {2}:            initial lfds, K x N dim. matrix. Provide initial densities for
 %     |                 the algorithm. 
-%     | {4}:            tolerance, defaults to 1e-6.
-%     | {5}:            maximum number of iterations, defaults to 100.
-%     | {6}:            maximum number of proximal iterations, defaults to 50.
+%     | {3}:            tolerance, defaults to 1e-6.
+%     | {4}:            maximum number of iterations, defaults to 100.
+%     | {5}:            maximum number of proximal iterations, defaults to 50.
 %
 % OUTPUT
 %     Q:                K x N dim. matrix. least favorable distributions
@@ -56,21 +54,54 @@ function [Q, I, residuals, c, nit_prox] = multi_lfds_density_band_proximal(f, df
 % add path to helper functions
 addpath ../Helper_Functions
 
-% initialization
-[verbose, skip_sanity_check, Q, tol, itmax, itmax_prox] = initialize_bands(P_min, P_max, dw, nargin-6, varargin);
+% defaults
+verbose = false;
+Q_init = NaN;
+tol = 1e-6;
+itmax_prox = 50;
 
-% sanity checks
-if ~skip_sanity_check
-    sanity_check_bands(P_min, P_max, dw);
+% verbosity
+if nargin >= 7 && ~isempty(varargin{1})
+    verbose = varargin{1};
 end
 
+% user defined Q
+if nargin >= 8 && ~isempty(varargin{2})
+    Q_init = varargin{2};
+end
+
+% user defined tolerance
+if nargin >= 9 && ~isempty(varargin{3})
+    if varargin{3} > 0
+        tol = varargin{3};
+    else
+        error('Tolerance must be a positive scalar.');
+    end
+end
+
+% user defined number of iterations
+if nargin >= 11 && ~isempty(varargin{5})
+    if varargin{5} > 0
+        itmax_prox = varargin{5};
+    else
+        error('Maximum number of iterations must be a positive scalar.');
+    end
+end
+
+% get dimensions
 [N, K] = size(P_min);
+
+% initialize lfds
+Q = set_densities(Q_init, P_min, P_max, dx);
 
 % get bounds for c
 c = get_c(N, K, df, f_param, P_min, P_max);
 
 % update residuals
-residuals = update_residuals(N, K, df, Q, f_param, P_max, P_min, dw, c);
+res = get_residuals(N, K, df, Q, f_param, P_max, P_min, dx, c);
+
+% silence inner iteration
+varargin{1} = false;
 
 % display progress
 nit_prox = 0;
@@ -78,38 +109,28 @@ if verbose
     fprintf("\n");
     fprintf("Proximal Iteration | Residual Objective | Residual Densities\n");
     fprintf("-------------------|--------------------|-------------------\n");
-    fprintf("%18d |     %.4e     |     %.4e\n", nit_prox, sum(residuals), max(abs(sum(Q,2))*dw-1));
+    fprintf("%18d |     %.4e     |     %.4e\n", nit_prox, sum(res), max(abs(sum(Q,2))*dx-1));
 end
 
 % iteratively solve non-proximal problems with augmented df
-while sum(residuals) > tol && nit_prox < itmax_prox
+while sum(res) > tol && nit_prox < itmax_prox
 
         % define proximal objective
         df_prox = @(n, k, X, f_param) df(n, k, X, f_param) + X(n,k) - Q(n, k);
 
+        % use LFDs form previous iteration as starting point
+        varargin{2} = Q;
+        
         % solve proximal problem
-        [Q, I, ~, c] = multi_lfds_density_band(f, df_prox, f_param, P_min, P_max, dw, false, true, Q, tol, itmax);
+        [Q, I, ~, c] = multi_lfds_density_band(f, df_prox, f_param, P_min, P_max, dx, varargin{:});
 
         % update residuals
-        residuals = update_residuals(N, K, df, Q, f_param, P_max, P_min, dw, c);
+        res = get_residuals(N, K, df, Q, f_param, P_max, P_min, dx, c);
 
         % display progress
         nit_prox = nit_prox+1;
         if verbose
-            fprintf("%18d |     %.4e     |     %.4e\n", nit_prox, sum(residuals), max(abs(sum(Q,2))*dw-1));
+            fprintf("%18d |     %.4e     |     %.4e\n", nit_prox, sum(res), max(abs(sum(Q,2))*dx-1));
         end
 
 end
-
-
-% get inital c and bounds
-function [c, c_min, c_max] = get_c(N, K, df, f_param, P_min, P_max)
-    c_min = zeros(N, 1); 
-    c_max = zeros(N, 1);
-    for n=1:N
-        c_min(n) = min(df(n, 1:K, P_min(:,1:K), f_param));
-        c_max(n) = max(df(n, 1:K, P_max(:,1:K), f_param));
-    end
-    c = (c_min+c_max)/2;
-    c_min = c_min - 0.1;
-    c_max = c_max + 0.1;

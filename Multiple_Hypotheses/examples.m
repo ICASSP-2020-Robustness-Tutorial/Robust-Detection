@@ -3,20 +3,20 @@
 % Sample Space
 wmin = -10;
 wmax = 10;
-dw = 0.01;
-w = wmin : dw : wmax;
+dx = 0.01;
+x = wmin : dx : wmax;
 
 % Density Bands
 N = 3;
-p1 = normpdf(w, -2, 3);
-p2 = normpdf(w, 2, 2);
-p3 = normpdf(w, 0, 1);
+p1 = normpdf(x, -2, 3);
+p2 = normpdf(x, 2, 2);
+p3 = normpdf(x, 0, 1);
 P = [p1; p2; p3];
 Pmin = 0.8*P;
 Pmax = 1.2*P;
 
 % Objective Function parameter
-a = [0.7 0.3];
+a = [0.5 0.5];
 
 % The objective function itself and its derivative are defined at the end of the file
 
@@ -24,18 +24,18 @@ a = [0.7 0.3];
 % LFDs under density band uncertainty
 
 % Denisty band model using regular algorithm
-Q = multi_lfds_density_band(@f, @df, a, Pmin, Pmax, dw);
+Q = multi_lfds_density_band(@f, @df, a, Pmin, Pmax, dx, true);
 
 % Plot lfds
-figure; plot(w,Q)
+figure; plot(x,Q)
 legend('q_0', 'q_1', 'q_2')
 title('Density band uncertainty - Regular')
 
 % Denisty band model using proximal algorithm
-Q = multi_lfds_density_band_proximal(@f, @df, a, Pmin, Pmax, dw);
+Q = multi_lfds_density_band_proximal(@f, @df, a, Pmin, Pmax, dx, true);
 
 % Plot lfds
-figure; plot(w,Q)
+figure; plot(x,Q)
 legend('q_0', 'q_1', 'q_2')
 title('Density band uncertainty - Proximal')
 
@@ -43,18 +43,18 @@ title('Density band uncertainty - Proximal')
 % LFDs under 10%  contamination (outliers)
 
 % outlier model using regular algorithm
-Q = multi_lfds_outlier(@f, @df, a, P, dw, 0.1);
+Q = multi_lfds_outlier(@f, @df, a, P, dx, 0.1, true, P);
 
 % Plot lfds
-figure; plot(w,Q)
+figure; plot(x,Q)
 legend('q_0', 'q_1', 'q_2')
 title('Epsilon contamination - Regular')
 
 % outlier model using proximal algorithm
-Q = multi_lfds_outlier_proximal(@f, @df, a, P, dw, 0.1);
+Q = multi_lfds_outlier_proximal(@f, @df, a, P, dx, 0.1, true, P);
 
 % Plot lfds
-figure; plot(w,Q)
+figure; plot(x,Q)
 legend('q_0', 'q_1', 'q_2')
 title('Epsilon contamination - Proximal')
 

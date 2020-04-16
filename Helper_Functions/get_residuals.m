@@ -1,4 +1,4 @@
-function residuals = update_residuals(N, K, df, Q, f_param, P_max, P_min, dw, c)
+function residuals = get_residuals(N, K, df, Q, f_param, P_max, P_min, dw, c)
 
 residuals = zeros(1, N);
 for n=1:N      

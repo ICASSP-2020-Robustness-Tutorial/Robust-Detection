@@ -1,4 +1,4 @@
-function [Q, I, residuals, c, nit_prox] = multi_lfds_outlier_proximal(f, df, f_param, P, dw, eps, varargin)
+function [Q, I, residuals, c, nit] = multi_lfds_outlier_proximal(f, df, f_param, P, dx, eps, varargin)
 % Get least favourable densities for multiple hypotheses under outlier
 % uncertainty. This function calls the density band version internally
 % 
@@ -14,13 +14,11 @@ function [Q, I, residuals, c, nit_prox] = multi_lfds_outlier_proximal(f, df, f_p
 %     varargin
 %     | {1}:        verbose {true, false}. Turn display of progress on or off.
 %     |             Defaults to true
-%     | {2}:        skip sanity checks {true, false}. Turn sanity checks of the
-%     |             input on or off. Defaults to false.
-%     | {3}:        initial lfds, K x N dim. matrix. Provide initial densities for
+%     | {2}:        initial lfds, K x N dim. matrix. Provide initial densities for
 %     |             the algorithm. 
-%     | {4}:        tolerance, defaults to 1e-6.
-%     | {5}:        maximum number of iterations, defaults to 100.
-%     | {6}:        maximum number of proximal iterations, defaults to 50.
+%     | {3}:        tolerance, defaults to 1e-6.
+%     | {4}:        maximum number of iterations, defaults to 100.
+%     | {5}:        maximum number of proximal iterations, defaults to 50.
 % 
 % OUTPUT
 %     Q:            K x N dim. matrix. least favorable distributions
@@ -32,6 +30,7 @@ function [Q, I, residuals, c, nit_prox] = multi_lfds_outlier_proximal(f, df, f_p
 % add path to helper functions
 addpath ../Helper_Functions
 
+% get dimensions
 [N, K] = size(P);
 
 % get outlier ratios
@@ -50,7 +49,7 @@ P_max = 2*P + 0.1;
 while true
     
     % solve density band model
-    [Q, I, residuals, c, nit_prox] = multi_lfds_density_band_proximal(f, df, f_param, P_min, P_max, dw, varargin);
+    [Q, I, residuals, c, nit] = multi_lfds_density_band_proximal(f, df, f_param, P_min, P_max, dx, varargin{:});
 
     % check if upper bound binds, increase if necessary
     if any(Q == P_max)
