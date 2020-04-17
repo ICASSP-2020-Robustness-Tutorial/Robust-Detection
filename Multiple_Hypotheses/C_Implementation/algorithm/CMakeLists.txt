@@ -16,8 +16,8 @@ target_link_libraries(cfpd ${MATH_LIB} ${GSL_LIB} ${BLAS_LIB})
 
 set_target_properties(cfpd PROPERTIES PUBLIC_HEADER cfpd.h)
 
-target_include_directories(cfpd PUBLIC "/home/mfauss/Projects/Cfpd/include")
+target_include_directories(cfpd PUBLIC "/usr/local/include")
 
 install(TARGETS cfpd
-    LIBRARY DESTINATION "/home/mfauss/Projects/Cfpd/lib"
-    PUBLIC_HEADER DESTINATION "/home/mfauss/Projects/Cfpd/include")
+    LIBRARY DESTINATION "/usr/local/lib"
+    PUBLIC_HEADER DESTINATION "/usr/local/include")
