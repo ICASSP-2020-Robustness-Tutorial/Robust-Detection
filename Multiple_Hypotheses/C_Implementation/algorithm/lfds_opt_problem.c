@@ -342,15 +342,29 @@ lfds_opt_problem_set_f(lfds_opt_problem_t *opt_problem,
 }
 
 
-void
+int
 lfds_opt_problem_set_bands(lfds_opt_problem_t *opt_problem,
                            gsl_matrix         *P_min,
                            gsl_matrix         *P_max)
 {
-    opt_problem->P_min = P_min;
-    opt_problem->P_max = P_max;
+    size_t N = opt_problem->N;
+    size_t K = opt_problem->K;
+    
+    if (P_min != NULL && P_min->size1 == N && P_min->size2 == K) {
+        opt_problem->P_min = P_min; 
+    } else {
+        opt_problem->status = CFPD_INVALID_BANDS;
+        return opt_problem->status;
+    }
+    
+    if (P_max != NULL && P_max->size1 == N && P_max->size2 == K) {
+        opt_problem->P_max = P_max; 
+    } else {
+        opt_problem->status = CFPD_INVALID_BANDS;
+        return opt_problem->status;
+    }
 
-    for (size_t n = 0; n < opt_problem->N; n++) {
+    for (size_t n = 0; n < N; n++) {
         gsl_vector_const_view p_min_view = gsl_matrix_const_row(P_min, n);
         double p_min_mass = lfds_vector_sum(&p_min_view.vector) * (opt_problem->mu);
         gsl_vector_set(opt_problem->p_min_mass, n, p_min_mass);
@@ -361,6 +375,7 @@ lfds_opt_problem_set_bands(lfds_opt_problem_t *opt_problem,
     }
 
     opt_problem->status = CFPD_CONTINUE;
+    return opt_problem->status;
 }
 
 
@@ -368,7 +383,14 @@ int
 lfds_opt_problem_set_P(lfds_opt_problem_t *opt_problem,
                        gsl_matrix         *P)
 {
-    int status = gsl_matrix_memcpy(opt_problem->P, P);
+    size_t N = opt_problem->N;
+    size_t K = opt_problem->K;
+    
+    int status = CFPD_INVALID_P;
+    
+    if (P != NULL && P->size1 == N && P->size2 == K) {
+        status = gsl_matrix_memcpy(opt_problem->P, P);   
+    }
 
     if (status) {
         GSL_ERROR(lfds_strerror(CFPD_INVALID_P), CFPD_INVALID_P);
@@ -385,7 +407,11 @@ int
 lfds_opt_problem_set_c(lfds_opt_problem_t *opt_problem,
                        gsl_vector         *c)
 {
-    int status = gsl_vector_memcpy(opt_problem->c, c);
+    int status = CFPD_INVALID_C;
+    
+    if (c != NULL && c->size == opt_problem->N) {
+        status = gsl_vector_memcpy(opt_problem->c, c);
+    }
 
     if (status) {
         GSL_ERROR(lfds_strerror(CFPD_INVALID_C), CFPD_INVALID_C);

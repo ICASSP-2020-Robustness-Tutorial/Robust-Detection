@@ -121,7 +121,7 @@ lfds_opt_problem_set_f(lfds_opt_problem_t *opt_problem,
                        void               *f_params);
 
 
-void
+int
 lfds_opt_problem_set_bands(lfds_opt_problem_t *opt_problem,
                            gsl_matrix         *P_min,
                            gsl_matrix         *P_max);
