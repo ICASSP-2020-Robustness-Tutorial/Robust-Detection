@@ -4,12 +4,12 @@
 #include <gsl/gsl_vector.h>
 
 
-typedef double(*cfpd_function_t)(const gsl_vector *x,
+typedef double(*lfds_function_t)(const gsl_vector *x,
                                  const size_t      k,
                                  const void       *params);
 
 
-typedef double(*cfpd_derivative_t)(const size_t      n,
+typedef double(*lfds_derivative_t)(const size_t      n,
                                    const gsl_vector *x,
                                    const size_t      k,
                                    const void       *params);

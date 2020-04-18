@@ -15,6 +15,6 @@ enum {
 
 
 void
-cfpd_test_print_result(const int test_result);
+lfds_test_print_result(const int test_result);
 
 #endif  //CFPD_TESTS_H

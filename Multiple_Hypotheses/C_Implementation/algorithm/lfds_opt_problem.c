@@ -6,16 +6,16 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_roots.h>
 
-#include "cfpd_function.h"
-#include "cfpd_errors.h"
-#include "cfpd_helper_functions.h"
-#include "cfpd_opt_problem.h"
-#include "cfpd_opt_problem_checks.h"
+#include "lfds_function.h"
+#include "lfds_errors.h"
+#include "lfds_helper_functions.h"
+#include "lfds_opt_problem.h"
+#include "lfds_opt_problem_checks.h"
 
 
 // Initialize struct
-cfpd_opt_problem_t*
-cfpd_opt_problem_new(const size_t N,
+lfds_opt_problem_t*
+lfds_opt_problem_new(const size_t N,
                      const size_t K,
                      const double mu)
 {
@@ -28,8 +28,8 @@ cfpd_opt_problem_new(const size_t N,
     }
 
     // Allocate struct
-    cfpd_opt_problem_t *opt_problem;
-    opt_problem = (cfpd_opt_problem_t*) malloc(sizeof(cfpd_opt_problem_t));
+    lfds_opt_problem_t *opt_problem;
+    opt_problem = (lfds_opt_problem_t*) malloc(sizeof(lfds_opt_problem_t));
 
     // Allocate density matrix (this might be big)
     gsl_matrix *P = gsl_matrix_alloc(N, K);
@@ -76,14 +76,14 @@ cfpd_opt_problem_new(const size_t N,
     opt_problem->N = N;
     opt_problem->K = K;
 
-    cfpd_opt_problem_reset(opt_problem);
+    lfds_opt_problem_reset(opt_problem);
 
     return opt_problem;
 }
 
 
 void
-cfpd_opt_problem_free(cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_free(lfds_opt_problem_t *opt_problem)
 {
     gsl_matrix_free(opt_problem->P);
     gsl_matrix_free(opt_problem->P_proximal);
@@ -102,7 +102,7 @@ cfpd_opt_problem_free(cfpd_opt_problem_t *opt_problem)
 
 
 void
-cfpd_opt_problem_reset(cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_reset(lfds_opt_problem_t *opt_problem)
 {
     opt_problem->f = NULL;
     opt_problem->df = NULL;
@@ -138,16 +138,16 @@ cfpd_opt_problem_reset(cfpd_opt_problem_t *opt_problem)
 
 
 void
-cfpd_opt_problem_update_P_proximal(cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_update_P_proximal(lfds_opt_problem_t *opt_problem)
 {
     gsl_matrix_memcpy(opt_problem->P_proximal, opt_problem->P);
 }
 
 
 void
-cfpd_opt_problem_set_c_bounds_auto(cfpd_opt_problem_t  *opt_problem)
+lfds_opt_problem_set_c_bounds_auto(lfds_opt_problem_t  *opt_problem)
 {
-    const cfpd_derivative_t df = opt_problem->df;
+    const lfds_derivative_t df = opt_problem->df;
     const void* f_params       = opt_problem->f_params;
     const gsl_matrix *P_min    = opt_problem->P_min;
     const gsl_matrix *P_max    = opt_problem->P_max;
@@ -179,7 +179,7 @@ cfpd_opt_problem_set_c_bounds_auto(cfpd_opt_problem_t  *opt_problem)
 
 
 void
-cfpd_opt_problem_set_c_auto(cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_set_c_auto(lfds_opt_problem_t *opt_problem)
 {
     // Set c to the average of c_min and c_max
     gsl_vector_memcpy(opt_problem->c, opt_problem->c_min);
@@ -191,7 +191,7 @@ cfpd_opt_problem_set_c_auto(cfpd_opt_problem_t *opt_problem)
 
 
 void
-cfpd_opt_problem_set_P_auto(cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_set_P_auto(lfds_opt_problem_t *opt_problem)
 {
     const gsl_matrix *P_min = opt_problem->P_min;
     const gsl_matrix *P_max = opt_problem->P_max;
@@ -231,38 +231,38 @@ cfpd_opt_problem_set_P_auto(cfpd_opt_problem_t *opt_problem)
 
 
 int
-cfpd_opt_problem_setup(cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_setup(lfds_opt_problem_t *opt_problem)
 {
     int status;
 
-    status = cfpd_opt_problem_check_f(opt_problem);
+    status = lfds_opt_problem_check_f(opt_problem);
     if (status != CFPD_CONTINUE) {
-        GSL_ERROR(cfpd_strerror(status), status);
+        GSL_ERROR(lfds_strerror(status), status);
     }
 
-    status = cfpd_opt_problem_check_bands(opt_problem);
+    status = lfds_opt_problem_check_bands(opt_problem);
     if (status != CFPD_CONTINUE) {
-        GSL_ERROR(cfpd_strerror(status), status);
+        GSL_ERROR(lfds_strerror(status), status);
     }
 
-    status = cfpd_opt_problem_check_tolerances(opt_problem);
+    status = lfds_opt_problem_check_tolerances(opt_problem);
     if (status != CFPD_CONTINUE) {
-        GSL_ERROR(cfpd_strerror(status), status);
+        GSL_ERROR(lfds_strerror(status), status);
     }
 
     if (!opt_problem->user_defined_P) {
-        cfpd_opt_problem_set_P_auto(opt_problem);
+        lfds_opt_problem_set_P_auto(opt_problem);
     }
 
-    status = cfpd_opt_problem_check_P(opt_problem);
+    status = lfds_opt_problem_check_P(opt_problem);
     if (status != CFPD_CONTINUE) {
-        GSL_ERROR(cfpd_strerror(status), status);
+        GSL_ERROR(lfds_strerror(status), status);
     }
 
-    cfpd_opt_problem_set_c_bounds_auto(opt_problem);
+    lfds_opt_problem_set_c_bounds_auto(opt_problem);
 
     if (!opt_problem->user_defined_c) {
-        cfpd_opt_problem_set_c_auto(opt_problem);
+        lfds_opt_problem_set_c_auto(opt_problem);
     }
 
     return opt_problem->status;
@@ -273,9 +273,9 @@ cfpd_opt_problem_setup(cfpd_opt_problem_t *opt_problem)
 
 
 double
-cfpd_opt_problem_get_objective_val(const cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_get_objective_val(const lfds_opt_problem_t *opt_problem)
 {
-    const cfpd_function_t f = opt_problem->f;
+    const lfds_function_t f = opt_problem->f;
     const void *f_params = opt_problem->f_params;
     const gsl_matrix *P = opt_problem->P;
     const double mu = opt_problem->mu;
@@ -291,35 +291,35 @@ cfpd_opt_problem_get_objective_val(const cfpd_opt_problem_t *opt_problem)
 
 
 const gsl_matrix*
-cfpd_opt_problem_get_P(const cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_get_P(const lfds_opt_problem_t *opt_problem)
 {
     return opt_problem->P;
 }
 
 
 const gsl_vector*
-cfpd_opt_problem_get_c(const cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_get_c(const lfds_opt_problem_t *opt_problem)
 {
     return opt_problem->c;
 }
 
 
 const gsl_vector*
-cfpd_opt_problem_get_objective_residual_vector(const cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_get_objective_residual_vector(const lfds_opt_problem_t *opt_problem)
 {
     return opt_problem->res_objective;
 }
 
 
 double
-cfpd_opt_problem_get_objective_residual(const cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_get_objective_residual(const lfds_opt_problem_t *opt_problem)
 {
-    return cfpd_vector_sum(opt_problem->res_objective);
+    return lfds_vector_sum(opt_problem->res_objective);
 }
 
 
 const gsl_vector*
-cfpd_opt_problem_get_densities_residual_vector(const cfpd_opt_problem_t *opt_problem)
+lfds_opt_problem_get_densities_residual_vector(const lfds_opt_problem_t *opt_problem)
 {
     return opt_problem->res_densities;
 }
@@ -329,9 +329,9 @@ cfpd_opt_problem_get_densities_residual_vector(const cfpd_opt_problem_t *opt_pro
 
 
 void
-cfpd_opt_problem_set_f(cfpd_opt_problem_t *opt_problem,
-                       cfpd_function_t     f,
-                       cfpd_derivative_t   df,
+lfds_opt_problem_set_f(lfds_opt_problem_t *opt_problem,
+                       lfds_function_t     f,
+                       lfds_derivative_t   df,
                        void               *f_params)
 {
     opt_problem->f = f;
@@ -343,7 +343,7 @@ cfpd_opt_problem_set_f(cfpd_opt_problem_t *opt_problem,
 
 
 void
-cfpd_opt_problem_set_bands(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_bands(lfds_opt_problem_t *opt_problem,
                            gsl_matrix         *P_min,
                            gsl_matrix         *P_max)
 {
@@ -352,11 +352,11 @@ cfpd_opt_problem_set_bands(cfpd_opt_problem_t *opt_problem,
 
     for (size_t n = 0; n < opt_problem->N; n++) {
         gsl_vector_const_view p_min_view = gsl_matrix_const_row(P_min, n);
-        double p_min_mass = cfpd_vector_sum(&p_min_view.vector) * (opt_problem->mu);
+        double p_min_mass = lfds_vector_sum(&p_min_view.vector) * (opt_problem->mu);
         gsl_vector_set(opt_problem->p_min_mass, n, p_min_mass);
 
         gsl_vector_const_view p_max_view = gsl_matrix_const_row(P_max, n);
-        double p_max_mass = cfpd_vector_sum(&p_max_view.vector) * (opt_problem->mu);
+        double p_max_mass = lfds_vector_sum(&p_max_view.vector) * (opt_problem->mu);
         gsl_vector_set(opt_problem->p_max_mass, n, p_max_mass);
     }
 
@@ -365,13 +365,13 @@ cfpd_opt_problem_set_bands(cfpd_opt_problem_t *opt_problem,
 
 
 int
-cfpd_opt_problem_set_P(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_P(lfds_opt_problem_t *opt_problem,
                        gsl_matrix         *P)
 {
     int status = gsl_matrix_memcpy(opt_problem->P, P);
 
     if (status) {
-        GSL_ERROR(cfpd_strerror(CFPD_INVALID_P), CFPD_INVALID_P);
+        GSL_ERROR(lfds_strerror(CFPD_INVALID_P), CFPD_INVALID_P);
     }
 
     opt_problem->user_defined_P = 1;
@@ -382,13 +382,13 @@ cfpd_opt_problem_set_P(cfpd_opt_problem_t *opt_problem,
 
 
 int
-cfpd_opt_problem_set_c(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_c(lfds_opt_problem_t *opt_problem,
                        gsl_vector         *c)
 {
     int status = gsl_vector_memcpy(opt_problem->c, c);
 
     if (status) {
-        GSL_ERROR(cfpd_strerror(CFPD_INVALID_C), CFPD_INVALID_C);
+        GSL_ERROR(lfds_strerror(CFPD_INVALID_C), CFPD_INVALID_C);
     }
 
     opt_problem->user_defined_c = 1;
@@ -399,7 +399,7 @@ cfpd_opt_problem_set_c(cfpd_opt_problem_t *opt_problem,
 
 
 void
-cfpd_opt_problem_set_tolerances(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_tolerances(lfds_opt_problem_t *opt_problem,
                                 double              eps_objective,
                                 double              eps_densities,
                                 double              eps_p,
@@ -415,7 +415,7 @@ cfpd_opt_problem_set_tolerances(cfpd_opt_problem_t *opt_problem,
 
 
 void
-cfpd_opt_problem_set_itmax(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_itmax(lfds_opt_problem_t *opt_problem,
                            const size_t        itmax)
 {
     opt_problem->itmax = itmax;
@@ -424,7 +424,7 @@ cfpd_opt_problem_set_itmax(cfpd_opt_problem_t *opt_problem,
 
 
 void
-cfpd_opt_problem_set_itmax_proximal(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_itmax_proximal(lfds_opt_problem_t *opt_problem,
                                     const size_t        itmax_proximal)
 {
     opt_problem->itmax_proximal = itmax_proximal;
@@ -433,7 +433,7 @@ cfpd_opt_problem_set_itmax_proximal(cfpd_opt_problem_t *opt_problem,
 
 
 void
-cfpd_opt_problem_set_verbosity(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_verbosity(lfds_opt_problem_t *opt_problem,
                                const int           verbosity)
 {
     opt_problem->verbosity = verbosity;
@@ -442,7 +442,7 @@ cfpd_opt_problem_set_verbosity(cfpd_opt_problem_t *opt_problem,
 
 
 void
-cfpd_opt_problem_set_root_solver(cfpd_opt_problem_t          *opt_problem,
+lfds_opt_problem_set_root_solver(lfds_opt_problem_t          *opt_problem,
                                  const gsl_root_fsolver_type *root_solver)
 {
     opt_problem->root_solver = root_solver;

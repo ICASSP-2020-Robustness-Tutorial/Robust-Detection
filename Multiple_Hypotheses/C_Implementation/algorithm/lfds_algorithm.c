@@ -3,23 +3,23 @@
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_errno.h>
 
-#include "cfpd_function.h"
-#include "cfpd_helper_functions.h"
-#include "cfpd_opt_problem.h"
-#include "cfpd_errors.h"
+#include "lfds_function.h"
+#include "lfds_helper_functions.h"
+#include "lfds_opt_problem.h"
+#include "lfds_errors.h"
 
 
 double
-cfpd_residual_df(double  x,
+lfds_residual_df(double  x,
                  void   *params)
 {
-    cfpd_opt_problem_t *opt_problem = (cfpd_opt_problem_t*) params;
+    lfds_opt_problem_t *opt_problem = (lfds_opt_problem_t*) params;
 
     const size_t n               = opt_problem->n;
     const size_t k               = opt_problem->k;
     const int proximal           = opt_problem->proximal;
     const double c_n             = gsl_vector_get(opt_problem->c, n);
-    const cfpd_derivative_t df   = opt_problem->df;
+    const lfds_derivative_t df   = opt_problem->df;
     const gsl_matrix *P_proximal = opt_problem->P_proximal;
     const void *f_params         = opt_problem->f_params;
 
@@ -42,7 +42,7 @@ cfpd_residual_df(double  x,
 
 
 double
-cfpd_update_residuals_objective(cfpd_opt_problem_t *opt_problem)
+lfds_update_residuals_objective(lfds_opt_problem_t *opt_problem)
 {
     const size_t N          = opt_problem->N;
     const size_t K          = opt_problem->K;
@@ -66,9 +66,9 @@ cfpd_update_residuals_objective(cfpd_opt_problem_t *opt_problem)
             double upper_gap_k = p_nk - gsl_matrix_get(P_max, n, k);
             double lower_gap_k = p_nk - gsl_matrix_get(P_min, n, k);
 
-            double residual_k_left  = cfpd_residual_df(p_nk - eps_p, (void*) opt_problem);
-            double residual_k_right = cfpd_residual_df(p_nk + eps_p, (void*) opt_problem);
-            double residual_k       = cfpd_residual_df(p_nk, (void*) opt_problem);
+            double residual_k_left  = lfds_residual_df(p_nk - eps_p, (void*) opt_problem);
+            double residual_k_right = lfds_residual_df(p_nk + eps_p, (void*) opt_problem);
+            double residual_k       = lfds_residual_df(p_nk, (void*) opt_problem);
 
             // Stationarity condition satisfied if p_nk is within eps_p tolerance of root
             if (residual_k_left <= 0.0 && residual_k_right >= 0.0) {
@@ -87,19 +87,19 @@ cfpd_update_residuals_objective(cfpd_opt_problem_t *opt_problem)
         gsl_vector_set(opt_problem->res_objective, n, residual);
     }
 
-    return cfpd_vector_sum(opt_problem->res_objective);
+    return lfds_vector_sum(opt_problem->res_objective);
 }
 
 
 double
-cfpd_update_residuals_densities(cfpd_opt_problem_t *opt_problem)
+lfds_update_residuals_densities(lfds_opt_problem_t *opt_problem)
 {
     const double mu     = opt_problem->mu;
     const gsl_matrix *P = opt_problem->P;
 
     for (size_t n = 0; n < opt_problem->N; n++) {
         gsl_vector_const_view p_view = gsl_matrix_const_row(P, n);
-        double density_mass = cfpd_vector_sum(&p_view.vector) * mu;
+        double density_mass = lfds_vector_sum(&p_view.vector) * mu;
         gsl_vector_set(opt_problem->res_densities, n, fabs(density_mass - 1.0));
     }
 
@@ -108,7 +108,7 @@ cfpd_update_residuals_densities(cfpd_opt_problem_t *opt_problem)
 
 
 void
-cfpd_optimize_density(cfpd_opt_problem_t *opt_problem)
+lfds_optimize_density(lfds_opt_problem_t *opt_problem)
 {
     const size_t n                           = opt_problem->n;
     const size_t K                           = opt_problem->K;
@@ -122,11 +122,11 @@ cfpd_optimize_density(cfpd_opt_problem_t *opt_problem)
 
         // check upper bound
         double p_max = gsl_matrix_get(P_max, n, k);
-        double res_df_max = cfpd_residual_df(p_max, (void*) opt_problem);
+        double res_df_max = lfds_residual_df(p_max, (void*) opt_problem);
 
         // check lower bound
         double p_min = gsl_matrix_get(P_min, n, k);
-        double res_df_min = cfpd_residual_df(p_min, (void*) opt_problem);
+        double res_df_min = lfds_residual_df(p_min, (void*) opt_problem);
 
         // catch nonconvex objective functions
         if (res_df_max < res_df_min) {
@@ -144,7 +144,7 @@ cfpd_optimize_density(cfpd_opt_problem_t *opt_problem)
             gsl_root_fsolver *solver = gsl_root_fsolver_alloc(root_solver);
 
             gsl_function F;
-            F.function = &cfpd_residual_df;
+            F.function = &lfds_residual_df;
             F.params = (void*) opt_problem;
 
             gsl_root_fsolver_set(solver, &F, p_min, p_max);
@@ -168,9 +168,9 @@ cfpd_optimize_density(cfpd_opt_problem_t *opt_problem)
 
 
 double
-cfpd_residual_density(double c_n, void* params)
+lfds_residual_density(double c_n, void* params)
 {
-    cfpd_opt_problem_t *opt_problem = (cfpd_opt_problem_t*) params;
+    lfds_opt_problem_t *opt_problem = (lfds_opt_problem_t*) params;
 
     const size_t n                  = opt_problem->n;
     const double mu                 = opt_problem->mu;
@@ -191,17 +191,17 @@ cfpd_residual_density(double c_n, void* params)
         return gsl_vector_get(p_max_mass, n) - 1.0;
     }
 
-    cfpd_optimize_density(opt_problem);
+    lfds_optimize_density(opt_problem);
 
     gsl_vector_const_view p_view = gsl_matrix_const_row(P, n);
-    double density_mass = cfpd_vector_sum(&p_view.vector) * mu;
+    double density_mass = lfds_vector_sum(&p_view.vector) * mu;
 
     return density_mass - 1.0;
 }
 
 
 void
-cfpd_update_density(cfpd_opt_problem_t *opt_problem,
+lfds_update_density(lfds_opt_problem_t *opt_problem,
                     const size_t        n)
 {
     const double eps_c                       = opt_problem->eps_c;
@@ -215,20 +215,20 @@ cfpd_update_density(cfpd_opt_problem_t *opt_problem,
     gsl_root_fsolver *solver = gsl_root_fsolver_alloc(root_solver);
 
     gsl_function F;
-    F.function = &cfpd_residual_density;
+    F.function = &lfds_residual_density;
     F.params = (void*) opt_problem;
 
     gsl_root_fsolver_set(solver, &F, c_min, c_max);
 
     int root_status = GSL_CONTINUE;
-    int cfpd_status = CFPD_CONTINUE;
+    int lfds_status = CFPD_CONTINUE;
 
-    while (root_status == GSL_CONTINUE && cfpd_status == CFPD_CONTINUE) {
+    while (root_status == GSL_CONTINUE && lfds_status == CFPD_CONTINUE) {
         gsl_root_fsolver_iterate(solver);
         double c_left = gsl_root_fsolver_x_lower(solver);
         double c_right = gsl_root_fsolver_x_upper(solver);
         root_status = gsl_root_test_interval(c_left, c_right, eps_c, 0.0);
-        cfpd_status = opt_problem->status;
+        lfds_status = opt_problem->status;
     }
 
     double c_root = gsl_root_fsolver_root(solver);
@@ -236,16 +236,16 @@ cfpd_update_density(cfpd_opt_problem_t *opt_problem,
 
     gsl_root_fsolver_free(solver);
 
-    cfpd_optimize_density(opt_problem);
+    lfds_optimize_density(opt_problem);
 }
 
 
 int
-cfpd_minimize(cfpd_opt_problem_t *opt_problem)
+lfds_minimize(lfds_opt_problem_t *opt_problem)
 {
     if (!opt_problem->proximal) {
         // check feasibility and initialize
-        int status = cfpd_opt_problem_setup(opt_problem);
+        int status = lfds_opt_problem_setup(opt_problem);
         if (status != CFPD_CONTINUE) {
             return status;
         }
@@ -258,8 +258,8 @@ cfpd_minimize(cfpd_opt_problem_t *opt_problem)
     size_t no_progress_count = 0;
     double res_objective_new;
 
-    double res_objective = cfpd_update_residuals_objective(opt_problem);
-    double res_densities = cfpd_update_residuals_densities(opt_problem);
+    double res_objective = lfds_update_residuals_objective(opt_problem);
+    double res_densities = lfds_update_residuals_densities(opt_problem);
 
     opt_problem->iter = 0;
 
@@ -284,10 +284,10 @@ cfpd_minimize(cfpd_opt_problem_t *opt_problem)
         size_t coordinate = gsl_vector_max_index(opt_problem->res_objective);
 
         // one iteration of non-proximal algorithm
-        cfpd_update_density(opt_problem, coordinate);
+        lfds_update_density(opt_problem, coordinate);
 
-        res_objective_new = cfpd_update_residuals_objective(opt_problem);
-        res_densities     = cfpd_update_residuals_densities(opt_problem);
+        res_objective_new = lfds_update_residuals_objective(opt_problem);
+        res_densities     = lfds_update_residuals_densities(opt_problem);
 
         if (res_objective_new >= res_objective) {
             no_progress_count += 1;
@@ -315,7 +315,7 @@ cfpd_minimize(cfpd_opt_problem_t *opt_problem)
     }
 
     if ((verbosity && opt_problem->status != CFPD_SOLVED) || verbosity > 1) {
-        printf("%s\n", cfpd_strerror(opt_problem->status));
+        printf("%s\n", lfds_strerror(opt_problem->status));
     }
 
     return opt_problem->status;
@@ -323,16 +323,16 @@ cfpd_minimize(cfpd_opt_problem_t *opt_problem)
 
 
 int
-cfpd_minimize_proximal(cfpd_opt_problem_t *opt_problem)
+lfds_minimize_proximal(lfds_opt_problem_t *opt_problem)
 {
     // check feasibility and initialize
-    int status = cfpd_opt_problem_setup(opt_problem);
+    int status = lfds_opt_problem_setup(opt_problem);
     if (status != CFPD_CONTINUE) {
         return status;
     }
 
-    double res_objective = cfpd_update_residuals_objective(opt_problem);
-    double res_densities = cfpd_update_residuals_densities(opt_problem);
+    double res_objective = lfds_update_residuals_objective(opt_problem);
+    double res_densities = lfds_update_residuals_densities(opt_problem);
 
     const size_t verbosity     = opt_problem->verbosity;
     const double eps_objective = opt_problem->eps_objective;
@@ -363,15 +363,15 @@ cfpd_minimize_proximal(cfpd_opt_problem_t *opt_problem)
     while (opt_problem->status == CFPD_CONTINUE) {
         opt_problem->iter_proximal++;
 
-        cfpd_opt_problem_update_P_proximal(opt_problem);
+        lfds_opt_problem_update_P_proximal(opt_problem);
 
         // one iteration of the proximal algorithm
         opt_problem->proximal = 1;
-        cfpd_minimize(opt_problem);
+        lfds_minimize(opt_problem);
         opt_problem->proximal = 0;
 
-        res_objective_new = cfpd_update_residuals_objective(opt_problem);
-        res_densities     = cfpd_update_residuals_densities(opt_problem);
+        res_objective_new = lfds_update_residuals_objective(opt_problem);
+        res_densities     = lfds_update_residuals_densities(opt_problem);
 
         if (res_objective_new >= res_objective) {
             no_progress_count += 1;
@@ -403,7 +403,7 @@ cfpd_minimize_proximal(cfpd_opt_problem_t *opt_problem)
     }
 
     if ((verbosity && opt_problem->status != CFPD_SOLVED) || verbosity > 1) {
-        printf("%s\n", cfpd_strerror(opt_problem->status));
+        printf("%s\n", lfds_strerror(opt_problem->status));
     }
 
     opt_problem->verbosity = verbosity;

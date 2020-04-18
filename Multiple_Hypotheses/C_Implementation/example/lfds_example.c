@@ -12,7 +12,7 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_randist.h>
 
-#include "../algorithm/cfpd.h"
+#include "../algorithm/lfds.h"
 
 
 // Define the objective function. It takes three arguments: a nonnegative vector
@@ -114,30 +114,30 @@ int main()
     void *alpha_void = (void*) alpha;
 
     // use objective function and derivatives defined above
-	cfpd_function_t f = weighted_kl;
-    cfpd_derivative_t df = weighted_kl_derivative;
+	lfds_function_t f = weighted_kl;
+    lfds_derivative_t df = weighted_kl_derivative;
 
 
     // solve the problem
 
 
 	// create new optimization problem
-	cfpd_opt_problem_t *opt_problem = cfpd_opt_problem_new(N, K, mu);
+	lfds_opt_problem_t *opt_problem = lfds_opt_problem_new(N, K, mu);
 
 	// set objective funtion and derivatives
-	cfpd_opt_problem_set_f(opt_problem, f, df, alpha_void);
+	lfds_opt_problem_set_f(opt_problem, f, df, alpha_void);
 
     // set bands
-    cfpd_opt_problem_set_bands(opt_problem, P_min, P_max);
+    lfds_opt_problem_set_bands(opt_problem, P_min, P_max);
 
     // optionally, set tolerances manually
-    // cfpd_opt_problem_set_tolerances(opt_problem, 1e-4, 1e-6, 1e-6, 1e-4);
+    // lfds_opt_problem_set_tolerances(opt_problem, 1e-4, 1e-6, 1e-6, 1e-4);
 
     // optionally, set maximum number of iterations manually
-    // cfpd_opt_problem_set_itmax(opt_problem, 500);
+    // lfds_opt_problem_set_itmax(opt_problem, 500);
     
     // optionally, set the initial guess for the optimal densities manually
-    // cfpd_opt_problem_set_P(opt_problem, P);
+    // lfds_opt_problem_set_P(opt_problem, P);
 
     // There are more things that can be chosen manually, such as the initial
     // guess for the clipping constants, and the algorithm used for root 
@@ -145,21 +145,21 @@ int main()
 
     // display progress. Use level 0 to supress any output, level 1 to only
     // display errors and warnings
-    cfpd_opt_problem_set_verbosity(opt_problem, 2);
+    lfds_opt_problem_set_verbosity(opt_problem, 2);
 
 	// solve problem. The function returns a status that indicates the outcome
-    // of the optimization. See /algorithm/cfpd_errors.h for a list of all
+    // of the optimization. See /algorithm/lfds_errors.h for a list of all
     // status messages
-    int status = cfpd_minimize(opt_problem);
+    int status = lfds_minimize(opt_problem);
 
-    // we can inspect the status via 'cfpd_strerror(status)'
-    printf("Status = %s\n", cfpd_strerror(status));
+    // we can inspect the status via 'lfds_strerror(status)'
+    printf("Status = %s\n", lfds_strerror(status));
 
     // The optimal density matrix can be accessed via
-    // cfpd_opt_problem_get_P(opt_problem)
+    // lfds_opt_problem_get_P(opt_problem)
     // For example, to store it in a regular text file:
     // FILE *file = fopen("Q.dat", "w");
-    // gsl_matrix_fprintf(file, cfpd_opt_problem_get_P(opt_problem), "%.5g");
+    // gsl_matrix_fprintf(file, lfds_opt_problem_get_P(opt_problem), "%.5g");
     // fclose(file);
 
     
@@ -168,25 +168,25 @@ int main()
 
 
     // start from scratch
-    cfpd_opt_problem_reset(opt_problem);
+    lfds_opt_problem_reset(opt_problem);
 
     // set objective funtion and derivatives
-	cfpd_opt_problem_set_f(opt_problem, f, df, alpha_void);
+	lfds_opt_problem_set_f(opt_problem, f, df, alpha_void);
 
     // set bands
-    cfpd_opt_problem_set_bands(opt_problem, P_min, P_max);
+    lfds_opt_problem_set_bands(opt_problem, P_min, P_max);
 
     // optionally, set maximum number of proximal iterations manually
-    // cfpd_opt_problem_set_itmax_proximal(opt_problem, 50);
+    // lfds_opt_problem_set_itmax_proximal(opt_problem, 50);
 
     // display progress
-    cfpd_opt_problem_set_verbosity(opt_problem, 2);
+    lfds_opt_problem_set_verbosity(opt_problem, 2);
 
     // solve problem using the proxiaml algorithm
-    status = cfpd_minimize_proximal(opt_problem);
+    status = lfds_minimize_proximal(opt_problem);
 
-    // we can inspect the status via 'cfpd_strerror(status)'
-    printf("Status = %s\n", cfpd_strerror(status));
+    // we can inspect the status via 'lfds_strerror(status)'
+    printf("Status = %s\n", lfds_strerror(status));
 
 
     // clean up

@@ -1,10 +1,10 @@
-#include "cfpd_errors.h"
+#include "lfds_errors.h"
 
 
 const char *
-cfpd_strerror(const int cfpd_errno)
+lfds_strerror(const int lfds_errno)
 {
-    switch (cfpd_errno) {
+    switch (lfds_errno) {
     case CFPD_CONTINUE:
         return "continue";
     case CFPD_SOLVED:

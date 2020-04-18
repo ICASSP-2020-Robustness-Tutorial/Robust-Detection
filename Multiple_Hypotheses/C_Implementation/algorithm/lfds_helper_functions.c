@@ -4,7 +4,7 @@
 
 
 double
-cfpd_vector_sum(const gsl_vector *v)
+lfds_vector_sum(const gsl_vector *v)
 {
     double v_sum = 0;
     for (size_t i = 0; i < v->size; i++) {
@@ -16,7 +16,7 @@ cfpd_vector_sum(const gsl_vector *v)
 
 
 int
-cfpd_vector_finite(const gsl_vector *v)
+lfds_vector_finite(const gsl_vector *v)
 {
     for (size_t n = 0; n < v->size; n++) {
         if (!gsl_finite(gsl_vector_get(v, n))) {
@@ -29,7 +29,7 @@ cfpd_vector_finite(const gsl_vector *v)
 
 
 int
-cfpd_matrix_geq(const gsl_matrix *m1,
+lfds_matrix_geq(const gsl_matrix *m1,
                 const gsl_matrix *m2)
 {
     if (m1->size1 != m2->size1 || m1->size2 != m2->size2) {
@@ -49,7 +49,7 @@ cfpd_matrix_geq(const gsl_matrix *m1,
 
 
 int
-cfpd_matrix_finite(const gsl_matrix *m)
+lfds_matrix_finite(const gsl_matrix *m)
 {
     for (size_t row = 0; row < m->size1; row++) {
         for (size_t col = 0; col < m->size2; col++) {

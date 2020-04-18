@@ -5,27 +5,27 @@
 #include <gsl/gsl_matrix.h>
 
 double
-cfpd_fload(const char* filename);
+lfds_fload(const char* filename);
 
 
 int
-cfpd_vector_load(const char *filename,
+lfds_vector_load(const char *filename,
                  gsl_vector *v);
 
 
 int
-cfpd_vector_approx_equal(const gsl_vector *v1,
+lfds_vector_approx_equal(const gsl_vector *v1,
                          const gsl_vector *v2,
                          const double      eps);
 
 
 int
-cfpd_matrix_load(const char *filename,
+lfds_matrix_load(const char *filename,
                  gsl_matrix *m);
 
 
 int
-cfpd_matrix_approx_equal(const gsl_matrix *m1,
+lfds_matrix_approx_equal(const gsl_matrix *m1,
                          const gsl_matrix *m2,
                          const double      eps);
 

@@ -5,11 +5,11 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_roots.h>
 
-#include "cfpd_function.h"
+#include "lfds_function.h"
 
 typedef struct {
-    cfpd_function_t f;
-    cfpd_derivative_t df;
+    lfds_function_t f;
+    lfds_derivative_t df;
     void *f_params;
     gsl_matrix *P_min;
     gsl_matrix *P_max;
@@ -41,104 +41,104 @@ typedef struct {
     int verbosity;
     int status;
     const gsl_root_fsolver_type *root_solver;
-} cfpd_opt_problem_t;
+} lfds_opt_problem_t;
 
 
 // Initialize struct
 
 
-cfpd_opt_problem_t*
-cfpd_opt_problem_new(const size_t N,
+lfds_opt_problem_t*
+lfds_opt_problem_new(const size_t N,
                      const size_t K,
                      const double mu);
 
 
 void
-cfpd_opt_problem_free(cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_free(lfds_opt_problem_t *opt_problem);
 
 
 // Functions
 
 
 void
-cfpd_opt_problem_reset(cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_reset(lfds_opt_problem_t *opt_problem);
 
 
 void
-cfpd_opt_problem_update_P_proximal(cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_update_P_proximal(lfds_opt_problem_t *opt_problem);
 
 
 void
-cfpd_opt_problem_set_c_bounds_auto(cfpd_opt_problem_t  *opt_problem);
+lfds_opt_problem_set_c_bounds_auto(lfds_opt_problem_t  *opt_problem);
 
 
 void
-cfpd_opt_problem_set_c_auto(cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_set_c_auto(lfds_opt_problem_t *opt_problem);
 
 
 void
-cfpd_opt_problem_set_P_auto(cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_set_P_auto(lfds_opt_problem_t *opt_problem);
 
 
 int
-cfpd_opt_problem_setup(cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_setup(lfds_opt_problem_t *opt_problem);
 
 
 // Getter
 
 
 double
-cfpd_opt_problem_get_objective_val(const cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_get_objective_val(const lfds_opt_problem_t *opt_problem);
 
 
 const gsl_matrix*
-cfpd_opt_problem_get_P(const cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_get_P(const lfds_opt_problem_t *opt_problem);
 
 
 const gsl_vector*
-cfpd_opt_problem_get_c(const cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_get_c(const lfds_opt_problem_t *opt_problem);
 
 
 const gsl_vector*
-cfpd_opt_problem_get_objective_residual_vector(const cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_get_objective_residual_vector(const lfds_opt_problem_t *opt_problem);
 
 
 double
-cfpd_opt_problem_get_objective_residual(const cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_get_objective_residual(const lfds_opt_problem_t *opt_problem);
 
 
 const gsl_vector*
-cfpd_opt_problem_get_densities_residual_vector(const cfpd_opt_problem_t *opt_problem);
+lfds_opt_problem_get_densities_residual_vector(const lfds_opt_problem_t *opt_problem);
 
 
 // Setter
 
 
 void
-cfpd_opt_problem_set_f(cfpd_opt_problem_t *opt_problem,
-                       cfpd_function_t     f,
-                       cfpd_derivative_t   df,
+lfds_opt_problem_set_f(lfds_opt_problem_t *opt_problem,
+                       lfds_function_t     f,
+                       lfds_derivative_t   df,
                        void               *f_params);
 
 
 void
-cfpd_opt_problem_set_bands(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_bands(lfds_opt_problem_t *opt_problem,
                            gsl_matrix         *P_min,
                            gsl_matrix         *P_max);
 
 
 int
-cfpd_opt_problem_set_P(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_P(lfds_opt_problem_t *opt_problem,
                        gsl_matrix         *P);
 
 
 int
-cfpd_opt_problem_set_c(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_c(lfds_opt_problem_t *opt_problem,
                        gsl_vector         *c);
 
 
 void
-cfpd_opt_problem_set_tolerances(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_tolerances(lfds_opt_problem_t *opt_problem,
                                 double              eps_objective,
                                 double              eps_densities,
                                 double              eps_p,
@@ -146,22 +146,22 @@ cfpd_opt_problem_set_tolerances(cfpd_opt_problem_t *opt_problem,
 
 
 void
-cfpd_opt_problem_set_itmax(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_itmax(lfds_opt_problem_t *opt_problem,
                            const size_t        itmax);
 
 
 void
-cfpd_opt_problem_set_itmax_proximal(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_itmax_proximal(lfds_opt_problem_t *opt_problem,
                                     const size_t        itmax_proximal);
 
 
 void
-cfpd_opt_problem_set_verbosity(cfpd_opt_problem_t *opt_problem,
+lfds_opt_problem_set_verbosity(lfds_opt_problem_t *opt_problem,
                                const int           verbosity);
 
 
 void
-cfpd_opt_problem_set_root_solver(cfpd_opt_problem_t          *opt_problem,
+lfds_opt_problem_set_root_solver(lfds_opt_problem_t          *opt_problem,
                                  const gsl_root_fsolver_type *root_solver);
 
 

@@ -19,7 +19,7 @@ enum {
 
 
 const char *
-cfpd_strerror(const int cfpd_errno);
+lfds_strerror(const int lfds_errno);
 
 
 #endif  //CFPD_ERRNO_H

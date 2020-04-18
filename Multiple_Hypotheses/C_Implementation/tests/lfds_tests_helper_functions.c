@@ -5,7 +5,7 @@
 
 
 double
-cfpd_fload(const char* filename)
+lfds_fload(const char* filename)
 {
     double value;
     FILE *f = fopen(filename, "r");
@@ -16,7 +16,7 @@ cfpd_fload(const char* filename)
 
 
 int
-cfpd_vector_load(const char *filename,
+lfds_vector_load(const char *filename,
                  gsl_vector *v)
 {
     FILE *f = fopen(filename, "r");
@@ -33,7 +33,7 @@ cfpd_vector_load(const char *filename,
 
 
 int
-cfpd_vector_approx_equal(const gsl_vector *v1,
+lfds_vector_approx_equal(const gsl_vector *v1,
                          const gsl_vector *v2,
                          const double      eps)
 {
@@ -52,7 +52,7 @@ cfpd_vector_approx_equal(const gsl_vector *v1,
 
 
 int
-cfpd_matrix_load(const char *filename,
+lfds_matrix_load(const char *filename,
                  gsl_matrix *m)
 {
     FILE *f = fopen(filename, "r");
@@ -68,7 +68,7 @@ cfpd_matrix_load(const char *filename,
 
 
 int
-cfpd_matrix_approx_equal(const gsl_matrix *m1,
+lfds_matrix_approx_equal(const gsl_matrix *m1,
                          const gsl_matrix *m2,
                          const double      eps)
 {
