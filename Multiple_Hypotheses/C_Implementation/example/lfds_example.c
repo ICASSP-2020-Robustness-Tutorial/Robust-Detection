@@ -7,12 +7,16 @@
 
 // include the necessary libraries
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_randist.h>
 
 #include "../algorithm/lfds.h"
+#include "./gnuplot_i.h"
 
 
 // Define the objective function. It takes three arguments: a nonnegative vector
@@ -69,13 +73,61 @@ weighted_kl_derivative(const size_t      n,
 }
 
 
+// Helper function to save LFDs in gnuplot format
+void
+lfds_save(char const* filename, const gsl_vector *w, const gsl_matrix *Q)
+{
+    // Check that dimensions match
+    if (w->size != Q->size2) {
+        fprintf(stderr,"'w' and rows of 'Q' must be of the same length");
+        return;
+    }
+    
+    // Open file to write LFDs
+    FILE *file = fopen("lfds.dat", "w");
+    
+    // Check if file was created
+    if (file == NULL) {
+        fprintf(stderr,"cannot create temporary file: exiting plot");
+        return;
+    }
+    
+    // Write LFDs column wise
+    fprintf(file, "# LFDs\n");
+    for (size_t k=0; k<Q->size2; k++) {
+        fprintf(file, "%.8e", gsl_vector_get(w, k));
+        for (size_t n=0; n<Q->size1; n++) {
+            fprintf(file, ", %.8e", gsl_matrix_get(Q, n, k));
+        }
+        fprintf(file, "\n");                         
+    }
+    fclose(file);
+}
+
+
+// Helper function to plot LFDs from a gnuplot file
+void 
+lfds_plot(char const* filename, const size_t N) 
+{       
+    gnuplot_ctrl *h = gnuplot_init() ;
+
+    gnuplot_cmd(h, "set terminal pdf");
+    gnuplot_cmd(h, "set output \"lfds_example.pdf\"");
+    gnuplot_setstyle(h, "lines");
+
+    gnuplot_cmd(h, "plot for [col=2:%d] \'%s\' using 1:col with %s title 'q_'.(col-2)", N+1, filename, h->pstyle);
+            
+    gnuplot_close(h);
+}
+
+
 int main()
 {
 	// number of densities (hypothese) N
 	size_t N = 3;
 
 	// number of basis functions (length of support vector)
-    size_t K = 1001;
+    size_t K = 2001;
 
     // mass of each basis function (grid spacing)
 	double mu = 0.01;
@@ -83,15 +135,15 @@ int main()
     // define support vector
     gsl_vector *w = gsl_vector_alloc (K);
 	for (size_t k = 0; k < K; k++)
-        gsl_vector_set (w, k, -5+k*mu);
+        gsl_vector_set (w, k, -10+k*mu);
 
     // define nominal densities as NxK matrix
     gsl_matrix *P = gsl_matrix_alloc(N, K);
     for (size_t k = 0; k < K; k++) {
         double w_k = gsl_vector_get (w, k);
 
-        double p0_k = gsl_ran_gaussian_pdf(w_k-0.5, 1.0);
-        double p1_k = gsl_ran_gaussian_pdf(w_k+0.5, 1.0);
+        double p0_k = gsl_ran_gaussian_pdf(w_k+2.0, 3.0);
+        double p1_k = gsl_ran_gaussian_pdf(w_k-2.0, 2.0);
         double p2_k = gsl_ran_gaussian_pdf(w_k, 1.0);
 
         gsl_matrix_set(P, 0, k, p0_k);
@@ -109,8 +161,8 @@ int main()
 
     // define weight vector used in f and df, set to (0.7, 0.3)
 	gsl_vector *alpha = gsl_vector_alloc(2);
-    gsl_vector_set(alpha, 0, 0.7);
-    gsl_vector_set(alpha, 1, 0.3);
+    gsl_vector_set(alpha, 0, 0.5);
+    gsl_vector_set(alpha, 1, 0.5);
     void *alpha_void = (void*) alpha;
 
     // use objective function and derivatives defined above
@@ -158,6 +210,7 @@ int main()
     // The optimal density matrix can be accessed via
     // lfds_opt_problem_get_P(opt_problem)
     // For example, to store it in a regular text file:
+    
     // FILE *file = fopen("Q.dat", "w");
     // gsl_matrix_fprintf(file, lfds_opt_problem_get_P(opt_problem), "%.5g");
     // fclose(file);
@@ -188,7 +241,11 @@ int main()
     // we can inspect the status via 'lfds_strerror(status)'
     printf("Status = %s\n", lfds_strerror(status));
 
-
+    // save and plot lfds
+    char const* filename = "lfds.dat";
+    lfds_save(filename, w, lfds_opt_problem_get_P(opt_problem));
+    lfds_plot(filename, N); 
+    
     // clean up
     gsl_vector_free(w);
     gsl_vector_free(alpha);
@@ -198,3 +255,4 @@ int main()
 
 	return 0;
 }
+
