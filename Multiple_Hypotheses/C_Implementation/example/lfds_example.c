@@ -7,16 +7,12 @@
 
 // include the necessary libraries
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_randist.h>
 
 #include "../algorithm/lfds.h"
-#include "./gnuplot_i.h"
 
 
 // Define the objective function. It takes three arguments: a nonnegative vector
@@ -84,7 +80,7 @@ lfds_save(char const* filename, const gsl_vector *w, const gsl_matrix *Q)
     }
     
     // Open file to write LFDs
-    FILE *file = fopen("lfds.dat", "w");
+    FILE *file = fopen(filename, "w");
     
     // Check if file was created
     if (file == NULL) {
@@ -102,22 +98,6 @@ lfds_save(char const* filename, const gsl_vector *w, const gsl_matrix *Q)
         fprintf(file, "\n");                         
     }
     fclose(file);
-}
-
-
-// Helper function to plot LFDs from a gnuplot file
-void 
-lfds_plot(char const* filename, const size_t N) 
-{       
-    gnuplot_ctrl *h = gnuplot_init() ;
-
-    gnuplot_cmd(h, "set terminal pdf");
-    gnuplot_cmd(h, "set output \"lfds_example.pdf\"");
-    gnuplot_setstyle(h, "lines");
-
-    gnuplot_cmd(h, "plot for [col=2:%d] \'%s\' using 1:col with %s title 'q_'.(col-2)", N+1, filename, h->pstyle);
-            
-    gnuplot_close(h);
 }
 
 
@@ -209,11 +189,11 @@ int main()
 
     // The optimal density matrix can be accessed via
     // lfds_opt_problem_get_P(opt_problem)
-    // For example, to store it in a regular text file:
+    // For example, to store it in a gnuplot compatible text file:
     
-    // FILE *file = fopen("Q.dat", "w");
-    // gsl_matrix_fprintf(file, lfds_opt_problem_get_P(opt_problem), "%.5g");
-    // fclose(file);
+    // save lfds
+    char const* filename = "lfds_example.dat";
+    lfds_save(filename, w, lfds_opt_problem_get_P(opt_problem));
 
     
     // If the regular minimization method is not able to solve the probelem,
@@ -240,11 +220,6 @@ int main()
 
     // we can inspect the status via 'lfds_strerror(status)'
     printf("Status = %s\n", lfds_strerror(status));
-
-    // save and plot lfds
-    char const* filename = "lfds.dat";
-    lfds_save(filename, w, lfds_opt_problem_get_P(opt_problem));
-    lfds_plot(filename, N); 
     
     // clean up
     gsl_vector_free(w);
