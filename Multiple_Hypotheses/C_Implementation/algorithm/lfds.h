@@ -29,7 +29,7 @@ typedef struct {
     void *f_params;
     gsl_matrix *P_min;
     gsl_matrix *P_max;
-    gsl_matrix *P;
+    gsl_matrix *Q;
     gsl_matrix *P_proximal;
     gsl_vector *p_min_mass;
     gsl_vector *p_max_mass;
@@ -51,7 +51,7 @@ typedef struct {
     size_t itmax_proximal;
     size_t iter;
     size_t iter_proximal;
-    int user_defined_P;
+    int user_defined_Q;
     int user_defined_c;
     int proximal;
     int verbosity;
@@ -82,7 +82,7 @@ lfds_opt_problem_get_objective_val(const lfds_opt_problem_t *opt_problem);
 
 
 const gsl_matrix*
-lfds_opt_problem_get_P(const lfds_opt_problem_t *opt_problem);
+lfds_opt_problem_get_Q(const lfds_opt_problem_t *opt_problem);
 
 
 const gsl_vector*
@@ -118,8 +118,8 @@ lfds_opt_problem_set_bands(lfds_opt_problem_t *opt_problem,
 
 
 int
-lfds_opt_problem_set_P(lfds_opt_problem_t *opt_problem,
-                               gsl_matrix         *P);
+lfds_opt_problem_set_initial_Q(lfds_opt_problem_t *opt_problem,
+                               gsl_matrix         *Q_init);
 
 
 int

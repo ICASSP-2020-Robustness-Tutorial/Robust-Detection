@@ -55,9 +55,6 @@ int main()
     lfds_vector_load("../../tests/data/problem/alpha.dat", alpha);
     void *alpha_void = (void*) alpha;
 
-    gsl_matrix *P = gsl_matrix_alloc(N, K);
-    lfds_matrix_load("../../tests/data/problem/P.dat", P);
-
     gsl_matrix *P_min = gsl_matrix_alloc(N, K);
     lfds_matrix_load("../../tests/data/problem/P_min.dat", P_min);
 
@@ -71,8 +68,8 @@ int main()
     gsl_matrix *P_ten = gsl_matrix_alloc(N, K);
     gsl_matrix_set_all(P_ten, 10.0);
 
-    gsl_matrix *P_true = gsl_matrix_alloc(N, K);
-    lfds_matrix_load("../../tests/data/results/P.dat", P_true);
+    gsl_matrix *Q_true = gsl_matrix_alloc(N, K);
+    lfds_matrix_load("../../tests/data/results/Q.dat", Q_true);
 
     gsl_matrix *P_invalid = gsl_matrix_alloc(10, 500);
 
@@ -101,7 +98,7 @@ int main()
     //
     lfds_opt_problem_t *opt_problem = lfds_opt_problem_new(0, 0, mu);
     result = (opt_problem == NULL) ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "problem new test 1 (N,K = 0):");
+    printf ("%-45s", "problem new test 1 (N,K = 0):");
     lfds_test_print_result(result);
 
     //
@@ -109,7 +106,7 @@ int main()
     //
     opt_problem = lfds_opt_problem_new(N, K, -mu);
     result = (opt_problem == NULL) ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "problem new test 2 (mu < 0):");
+    printf ("%-45s", "problem new test 2 (mu < 0):");
     lfds_test_print_result(result);
 
     //
@@ -117,14 +114,14 @@ int main()
     //
     opt_problem = lfds_opt_problem_new(N, K, mu);
     result = (opt_problem != NULL) ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "problem new test 3 (valid problem):");
+    printf ("%-45s", "problem new test 3 (valid problem):");
     lfds_test_print_result(result);
 
     //
     // empty problem test
     //
     result = lfds_test_opt_problem(opt_problem, CFPD_INVALID_F);
-    printf ("%-40s", "empty problem test:");
+    printf ("%-45s", "empty problem test:");
     lfds_test_print_result(result);
 
     // valid f
@@ -134,7 +131,7 @@ int main()
     // invalid bands test 1 (empty bands)
     //
     result = lfds_test_opt_problem(opt_problem, CFPD_INVALID_BANDS);
-    printf ("%-40s", "invalid bands test 1 (empty bands):");
+    printf ("%-45s", "invalid bands test 1 (empty bands):");
     lfds_test_print_result(result);
 
     //
@@ -142,7 +139,7 @@ int main()
     //
     lfds_opt_problem_set_bands(opt_problem, P_max, P_min);
     result = lfds_test_opt_problem(opt_problem, CFPD_INVALID_BANDS);
-    printf ("%-40s", "invalid bands test 2 (P_min > P_max):");
+    printf ("%-45s", "invalid bands test 2 (P_min > P_max):");
     lfds_test_print_result(result);
 
     //
@@ -150,7 +147,7 @@ int main()
     //
     lfds_opt_problem_set_bands(opt_problem, P_min_invalid, P_max);
     result = lfds_test_opt_problem(opt_problem, CFPD_INVALID_BANDS);
-    printf ("%-40s", "invalid bands test 3 (invalid K):");
+    printf ("%-45s", "invalid bands test 3 (invalid K):");
     lfds_test_print_result(result);
 
     //
@@ -159,7 +156,7 @@ int main()
     gsl_matrix_scale(P_min, 2.0);
     lfds_opt_problem_set_bands(opt_problem, P_min, P_max);
     result = lfds_test_opt_problem(opt_problem, CFPD_INVALID_BANDS);
-    printf ("%-40s", "invalid bands test 4 (P_min too large):");
+    printf ("%-45s", "invalid bands test 4 (P_min too large):");
     lfds_test_print_result(result);
 
     //
@@ -168,7 +165,7 @@ int main()
     gsl_matrix_scale(P_min, -0.5);
     lfds_opt_problem_set_bands(opt_problem, P_min, P_max);
     result = lfds_test_opt_problem(opt_problem, CFPD_INVALID_BANDS);
-    printf ("%-40s", "invalid bands test 5 (P_min < 0):");
+    printf ("%-45s", "invalid bands test 5 (P_min < 0):");
     lfds_test_print_result(result);
 
     //
@@ -178,7 +175,7 @@ int main()
     gsl_matrix_scale(P_max, 0.5);
     lfds_opt_problem_set_bands(opt_problem, P_min, P_max);
     result = lfds_test_opt_problem(opt_problem, CFPD_INVALID_BANDS);
-    printf ("%-40s", "invalid bands test 6 (P_max too small):");
+    printf ("%-45s", "invalid bands test 6 (P_max too small):");
     lfds_test_print_result(result);
 
     // valid bands
@@ -190,7 +187,7 @@ int main()
     //
     lfds_opt_problem_set_tolerances(opt_problem, 0.0, 0.0, 0.0, 0.0);
     result = lfds_test_opt_problem(opt_problem, CFPD_INVALID_TOLERANCES);
-    printf ("%-40s", "invalid tolerances test:");
+    printf ("%-45s", "invalid tolerances test:");
     lfds_test_print_result(result);
 
     // valid tolerances
@@ -201,31 +198,31 @@ int main()
     //
     status = lfds_opt_problem_set_c(opt_problem, c_invalid);
     result =(status == CFPD_INVALID_C) ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "invalid c test:");
+    printf ("%-45s", "invalid c test:");
     lfds_test_print_result(result);
 
     //
     // invalid P test 1 (invalid dimensions)
     //
-    status = lfds_opt_problem_set_P(opt_problem, P_invalid);
+    status = lfds_opt_problem_set_initial_Q(opt_problem, P_invalid);
     result =(status == CFPD_INVALID_P) ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "invalid P test 1 (invalid K):");
+    printf ("%-45s", "invalid initial Q test 1 (invalid K):");
     lfds_test_print_result(result);
 
     //
     // invalid P test 2 (P < Pmin)
     //
-    lfds_opt_problem_set_P(opt_problem, P_zero);
+    lfds_opt_problem_set_initial_Q(opt_problem, P_zero);
     lfds_test_opt_problem(opt_problem, CFPD_INVALID_P);
-    printf ("%-40s", "invalid P test 2 (P < Pmin):");
+    printf ("%-45s", "invalid initial Q test 2 (P < Pmin):");
     lfds_test_print_result(result);
 
     //
     // invalid P test 3 (P larger Pmax)
     //
-    lfds_opt_problem_set_P(opt_problem, P_ten);
+    lfds_opt_problem_set_initial_Q(opt_problem, P_ten);
     lfds_test_opt_problem(opt_problem, CFPD_INVALID_P);
-    printf ("%-40s", "invalid P test 3 (P larger Pmax):");
+    printf ("%-45s", "invalid initial Q test 3 (Q larger Pmax):");
     lfds_test_print_result(result);
 
     // reset problem
@@ -240,16 +237,16 @@ int main()
     //
     lfds_minimize(opt_problem);
     lfds_test_opt_problem(opt_problem, CFPD_SOLVED);
-    printf ("%-40s", "minimization test status:");
+    printf ("%-45s", "minimization test status:");
     lfds_test_print_result(result);
 
     //
     // minimization test P
     //
-    const gsl_matrix *P_result = lfds_opt_problem_get_P(opt_problem);
-    int equal = lfds_matrix_approx_equal(P_result, P_true, accuracy);
+    const gsl_matrix *Q_result = lfds_opt_problem_get_Q(opt_problem);
+    int equal = lfds_matrix_approx_equal(Q_result, Q_true, accuracy);
     result = equal ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "minimization test P:");
+    printf ("%-45s", "minimization test Q:");
     lfds_test_print_result(result);
 
     //
@@ -258,7 +255,7 @@ int main()
     const gsl_vector *c_result = lfds_opt_problem_get_c(opt_problem);
     equal = lfds_vector_approx_equal(c_result, c_true, accuracy);
     result = equal ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "minimization test c:");
+    printf ("%-45s", "minimization test c:");
     lfds_test_print_result(result);
 
     //
@@ -266,7 +263,7 @@ int main()
     //
     double obj_val_result = lfds_opt_problem_get_objective_val(opt_problem);
     result = (fabs(obj_val_result-obj_val_true) < accuracy) ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "minimization test obj val:");
+    printf ("%-45s", "minimization test obj val:");
     lfds_test_print_result(result);
 
     // reset problem
@@ -281,16 +278,16 @@ int main()
     //
     lfds_minimize(opt_problem);
     lfds_test_opt_problem(opt_problem, CFPD_SOLVED);
-    printf ("%-40s", "custom c minimization test status:");
+    printf ("%-45s", "custom c minimization test status:");
     lfds_test_print_result(result);
 
     //
     // custom c minimization test P
     //
-    P_result = lfds_opt_problem_get_P(opt_problem);
-    equal = lfds_matrix_approx_equal(P_result, P_true, accuracy);
+    Q_result = lfds_opt_problem_get_Q(opt_problem);
+    equal = lfds_matrix_approx_equal(Q_result, Q_true, accuracy);
     result = equal ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "custom c minimization test P:");
+    printf ("%-45s", "custom c minimization test Q:");
     lfds_test_print_result(result);
 
     //
@@ -299,7 +296,7 @@ int main()
     c_result = lfds_opt_problem_get_c(opt_problem);
     equal = lfds_vector_approx_equal(c_result, c_true, accuracy);
     result = equal ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "custom c minimization test c:");
+    printf ("%-45s", "custom c minimization test c:");
     lfds_test_print_result(result);
 
 
@@ -308,7 +305,7 @@ int main()
     //
     obj_val_result = lfds_opt_problem_get_objective_val(opt_problem);
     result = (fabs(obj_val_result-obj_val_true) < accuracy) ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "custom c minimization test obj val:");
+    printf ("%-45s", "custom c minimization test obj val:");
     lfds_test_print_result(result);
 
     // reset problem
@@ -323,16 +320,16 @@ int main()
     //
     lfds_minimize_proximal(opt_problem);
     lfds_test_opt_problem(opt_problem, CFPD_SOLVED);
-    printf ("%-40s", "proximal minimization test status:");
+    printf ("%-45s", "proximal minimization test status:");
     lfds_test_print_result(result);
 
     //
     // proximal minimization test P
     //
-    P_result = lfds_opt_problem_get_P(opt_problem);
-    equal = lfds_matrix_approx_equal(P_result, P_true, accuracy);
+    Q_result = lfds_opt_problem_get_Q(opt_problem);
+    equal = lfds_matrix_approx_equal(Q_result, Q_true, accuracy);
     result = equal ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "proximal minimization test P:");
+    printf ("%-45s", "proximal minimization test Q:");
     lfds_test_print_result(result);
 
     //
@@ -341,7 +338,7 @@ int main()
     c_result = lfds_opt_problem_get_c(opt_problem);
     equal = lfds_vector_approx_equal(c_result, c_true, accuracy);
     result = equal ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "proximal minimization test c:");
+    printf ("%-45s", "proximal minimization test c:");
     lfds_test_print_result(result);
 
     //
@@ -349,7 +346,7 @@ int main()
     //
     obj_val_result = lfds_opt_problem_get_objective_val(opt_problem);
     result = (fabs(obj_val_result-obj_val_true) < accuracy) ? TEST_SUCCESS : TEST_FAIL;
-    printf ("%-40s", "proximal minimization test obj val:");
+    printf ("%-45s", "proximal minimization test obj val:");
     lfds_test_print_result(result);
 
 
@@ -359,13 +356,12 @@ int main()
     gsl_vector_free(c);
     gsl_vector_free(c_invalid);
     gsl_vector_free(c_true);
-    gsl_matrix_free(P);
     gsl_matrix_free(P_min);
     gsl_matrix_free(P_max);
     gsl_matrix_free(P_min_invalid);
     gsl_matrix_free(P_zero);
     gsl_matrix_free(P_ten);
-    gsl_matrix_free(P_true);
+    gsl_matrix_free(Q_true);
     gsl_matrix_free(P_invalid);
 
     return 0;

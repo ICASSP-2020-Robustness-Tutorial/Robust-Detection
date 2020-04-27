@@ -24,8 +24,8 @@ lfds_residual_df(double  x,
     const void *f_params         = opt_problem->f_params;
 
     // replace kth element in Pn with x (this is a side effect!)
-    gsl_matrix_set(opt_problem->P, n, k, x);
-    gsl_vector_const_view p_view = gsl_matrix_const_column(opt_problem->P, k);
+    gsl_matrix_set(opt_problem->Q, n, k, x);
+    gsl_vector_const_view p_view = gsl_matrix_const_column(opt_problem->Q, k);
 
     double df_value = df(n, &p_view.vector, k, f_params);
 
@@ -50,7 +50,7 @@ lfds_update_residuals_objective(lfds_opt_problem_t *opt_problem)
     const double eps_p      = opt_problem->eps_p;
     const gsl_matrix *P_max = opt_problem->P_max;
     const gsl_matrix *P_min = opt_problem->P_min;
-    const gsl_matrix *P     = opt_problem->P;
+    const gsl_matrix *Q     = opt_problem->Q;
 
     for (size_t n = 0; n < N; n++) {
         opt_problem->n = n;
@@ -61,14 +61,14 @@ lfds_update_residuals_objective(lfds_opt_problem_t *opt_problem)
         for (size_t k = 0; k < K; k++) {
             opt_problem->k = k;
 
-            double p_nk = gsl_matrix_get(P, n, k);
+            double q_nk = gsl_matrix_get(Q, n, k);
 
-            double upper_gap_k = p_nk - gsl_matrix_get(P_max, n, k);
-            double lower_gap_k = p_nk - gsl_matrix_get(P_min, n, k);
+            double upper_gap_k = q_nk - gsl_matrix_get(P_max, n, k);
+            double lower_gap_k = q_nk - gsl_matrix_get(P_min, n, k);
 
-            double residual_k_left  = lfds_residual_df(p_nk - eps_p, (void*) opt_problem);
-            double residual_k_right = lfds_residual_df(p_nk + eps_p, (void*) opt_problem);
-            double residual_k       = lfds_residual_df(p_nk, (void*) opt_problem);
+            double residual_k_left  = lfds_residual_df(q_nk - eps_p, (void*) opt_problem);
+            double residual_k_right = lfds_residual_df(q_nk + eps_p, (void*) opt_problem);
+            double residual_k       = lfds_residual_df(q_nk, (void*) opt_problem);
 
             // Stationarity condition satisfied if p_nk is within eps_p tolerance of root
             if (residual_k_left <= 0.0 && residual_k_right >= 0.0) {
@@ -95,10 +95,10 @@ double
 lfds_update_residuals_densities(lfds_opt_problem_t *opt_problem)
 {
     const double mu     = opt_problem->mu;
-    const gsl_matrix *P = opt_problem->P;
+    const gsl_matrix *Q = opt_problem->Q;
 
     for (size_t n = 0; n < opt_problem->N; n++) {
-        gsl_vector_const_view p_view = gsl_matrix_const_row(P, n);
+        gsl_vector_const_view p_view = gsl_matrix_const_row(Q, n);
         double density_mass = lfds_vector_sum(&p_view.vector) * mu;
         gsl_vector_set(opt_problem->res_densities, n, fabs(density_mass - 1.0));
     }
@@ -135,10 +135,10 @@ lfds_optimize_density(lfds_opt_problem_t *opt_problem)
 
         if (res_df_min >= 0.0) {
             // pmin binds
-            gsl_matrix_set(opt_problem->P, n, k, p_min);
+            gsl_matrix_set(opt_problem->Q, n, k, p_min);
         } else if (res_df_max <= 0.0) {
             // pmax binds
-            gsl_matrix_set(opt_problem->P, n, k, p_max);
+            gsl_matrix_set(opt_problem->Q, n, k, p_max);
         } else {
             // find root on interval [pmin, pmax]
             gsl_root_fsolver *solver = gsl_root_fsolver_alloc(root_solver);
@@ -153,13 +153,13 @@ lfds_optimize_density(lfds_opt_problem_t *opt_problem)
 
             while (status == GSL_CONTINUE) {
                 gsl_root_fsolver_iterate(solver);
-                double p_left = gsl_root_fsolver_x_lower(solver);
-                double p_right = gsl_root_fsolver_x_upper(solver);
-                status = gsl_root_test_interval(p_left, p_right, eps_p, 0.0);
+                double q_left = gsl_root_fsolver_x_lower(solver);
+                double q_right = gsl_root_fsolver_x_upper(solver);
+                status = gsl_root_test_interval(q_left, q_right, eps_p, 0.0);
             }
 
-            double p_root = gsl_root_fsolver_root(solver);
-            gsl_matrix_set(opt_problem->P, n, k, p_root);
+            double q_root = gsl_root_fsolver_root(solver);
+            gsl_matrix_set(opt_problem->Q, n, k, q_root);
 
             gsl_root_fsolver_free(solver);
         }
@@ -178,7 +178,7 @@ lfds_residual_density(double c_n, void* params)
     const gsl_vector *c_min         = opt_problem->c_min;
     const gsl_vector *p_min_mass    = opt_problem->p_min_mass;
     const gsl_vector *p_max_mass    = opt_problem->p_max_mass;
-    const gsl_matrix *P             = opt_problem->P;
+    const gsl_matrix *Q             = opt_problem->Q;
 
     gsl_vector_set(opt_problem->c, n, c_n);
 
@@ -193,8 +193,8 @@ lfds_residual_density(double c_n, void* params)
 
     lfds_optimize_density(opt_problem);
 
-    gsl_vector_const_view p_view = gsl_matrix_const_row(P, n);
-    double density_mass = lfds_vector_sum(&p_view.vector) * mu;
+    gsl_vector_const_view q_view = gsl_matrix_const_row(Q, n);
+    double density_mass = lfds_vector_sum(&q_view.vector) * mu;
 
     return density_mass - 1.0;
 }

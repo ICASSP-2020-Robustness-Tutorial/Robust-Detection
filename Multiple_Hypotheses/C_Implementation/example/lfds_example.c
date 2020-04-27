@@ -169,7 +169,7 @@ int main()
     // lfds_opt_problem_set_itmax(opt_problem, 500);
     
     // optionally, set the initial guess for the optimal densities manually
-    // lfds_opt_problem_set_P(opt_problem, P);
+    // lfds_opt_problem_set_initial_Q(opt_problem, P);
 
     // There are more things that can be chosen manually, such as the initial
     // guess for the clipping constants, and the algorithm used for root 
@@ -188,12 +188,12 @@ int main()
     printf("Status = %s\n", lfds_strerror(status));
 
     // The optimal density matrix can be accessed via
-    // lfds_opt_problem_get_P(opt_problem)
+    // lfds_opt_problem_get_Q(opt_problem)
     // For example, to store it in a gnuplot compatible text file:
     
     // save lfds
     char const* filename = "lfds_example.dat";
-    lfds_save(filename, w, lfds_opt_problem_get_P(opt_problem));
+    lfds_save(filename, w, lfds_opt_problem_get_Q(opt_problem));
 
     
     // If the regular minimization method is not able to solve the probelem,

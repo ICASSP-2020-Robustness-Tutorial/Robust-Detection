@@ -97,11 +97,11 @@ lfds_opt_problem_check_P(lfds_opt_problem_t *opt_problem)
 {
     const gsl_matrix *P_min = opt_problem->P_min;
     const gsl_matrix *P_max = opt_problem->P_max;
-    const gsl_matrix *P = opt_problem->P;
+    const gsl_matrix *Q = opt_problem->Q;
     const size_t N = opt_problem->N;
     const size_t K = opt_problem->K;
-    const size_t N_P = opt_problem->P->size1;
-    const size_t K_P = opt_problem->P->size2;
+    const size_t N_Q = opt_problem->Q->size1;
+    const size_t K_Q = opt_problem->Q->size2;
 
     // Check that bands are specified
     if (P_min == NULL || P_max == NULL) {
@@ -110,17 +110,17 @@ lfds_opt_problem_check_P(lfds_opt_problem_t *opt_problem)
     }
 
     // Check dimensions of P
-    if (N_P != N || K_P != K) {
+    if (N_Q != N || K_Q != K) {
         opt_problem->status = CFPD_INVALID_P;
         GSL_ERROR(lfds_strerror(CFPD_INVALID_P), CFPD_INVALID_P);
     }
 
     // Check validity of bounds
-    if (!lfds_matrix_geq(P, P_min)) {
+    if (!lfds_matrix_geq(Q, P_min)) {
         opt_problem->status = CFPD_INVALID_P;
         GSL_ERROR(lfds_strerror(CFPD_INVALID_P), CFPD_INVALID_P);
     }
-    if (!lfds_matrix_geq(P_max, P)) {
+    if (!lfds_matrix_geq(P_max, Q)) {
         opt_problem->status = CFPD_INVALID_P;
         GSL_ERROR(lfds_strerror(CFPD_INVALID_P), CFPD_INVALID_P);
     }

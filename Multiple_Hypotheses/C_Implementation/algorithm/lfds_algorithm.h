@@ -2,7 +2,6 @@
 #define CFPD_ALGORITHM_H
 
 #include "lfds_function.h"
-#include "lfds_function_vector.h"
 #include "lfds_opt_problem.h"
 
 

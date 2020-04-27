@@ -1,6 +1,7 @@
 #ifndef CFPD_OPT_PROBLEM_CHECKS_H
 #define CFPD_OPT_PROBLEM_CHECKS_H
 
+#include "lfds_opt_problem.h"
 
 int
 lfds_opt_problem_check_f(lfds_opt_problem_t *opt_problem);

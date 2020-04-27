@@ -32,9 +32,9 @@ lfds_opt_problem_new(const size_t N,
     opt_problem = (lfds_opt_problem_t*) malloc(sizeof(lfds_opt_problem_t));
 
     // Allocate density matrix (this might be big)
-    gsl_matrix *P = gsl_matrix_alloc(N, K);
+    gsl_matrix *Q = gsl_matrix_alloc(N, K);
 
-    if (P == NULL) {
+    if (Q == NULL) {
         free(opt_problem);
         GSL_ERROR_VAL(gsl_strerror(GSL_ENOMEM), GSL_ENOMEM, NULL);
     }
@@ -44,7 +44,7 @@ lfds_opt_problem_new(const size_t N,
 
     if (P_proximal == NULL) {
         free(opt_problem);
-        gsl_matrix_free(P);
+        gsl_matrix_free(Q);
         GSL_ERROR_VAL(gsl_strerror(GSL_ENOMEM), GSL_ENOMEM, NULL);
     }
 
@@ -62,7 +62,7 @@ lfds_opt_problem_new(const size_t N,
     gsl_vector *p_max_mass = gsl_vector_alloc(N);
 
     // Assign fields
-    opt_problem->P = P;
+    opt_problem->Q = Q;
     opt_problem->P_proximal = P_proximal;
     opt_problem->p_min_mass = p_min_mass;
     opt_problem->p_max_mass = p_max_mass;
@@ -85,7 +85,7 @@ lfds_opt_problem_new(const size_t N,
 void
 lfds_opt_problem_free(lfds_opt_problem_t *opt_problem)
 {
-    gsl_matrix_free(opt_problem->P);
+    gsl_matrix_free(opt_problem->Q);
     gsl_matrix_free(opt_problem->P_proximal);
     gsl_vector_free(opt_problem->c);
     gsl_vector_free(opt_problem->c_min);
@@ -109,7 +109,7 @@ lfds_opt_problem_reset(lfds_opt_problem_t *opt_problem)
     opt_problem->f_params = NULL;
     opt_problem->P_min = NULL;
     opt_problem->P_max = NULL;
-    gsl_matrix_set_all(opt_problem->P, 0.0);
+    gsl_matrix_set_all(opt_problem->Q, 0.0);
     gsl_matrix_set_all(opt_problem->P_proximal, 0.0);
     gsl_vector_set_all(opt_problem->p_min_mass, 0.0);
     gsl_vector_set_all(opt_problem->p_max_mass, 0.0);
@@ -128,7 +128,7 @@ lfds_opt_problem_reset(lfds_opt_problem_t *opt_problem)
     opt_problem->itmax_proximal = 100 * (opt_problem->N);
     opt_problem->iter = 0;
     opt_problem->iter_proximal = 0;
-    opt_problem->user_defined_P = 0;
+    opt_problem->user_defined_Q = 0;
     opt_problem->user_defined_c = 0;
     opt_problem->proximal = 0;
     opt_problem->verbosity = 1;
@@ -140,7 +140,7 @@ lfds_opt_problem_reset(lfds_opt_problem_t *opt_problem)
 void
 lfds_opt_problem_update_P_proximal(lfds_opt_problem_t *opt_problem)
 {
-    gsl_matrix_memcpy(opt_problem->P_proximal, opt_problem->P);
+    gsl_matrix_memcpy(opt_problem->P_proximal, opt_problem->Q);
 }
 
 
@@ -191,7 +191,7 @@ lfds_opt_problem_set_c_auto(lfds_opt_problem_t *opt_problem)
 
 
 void
-lfds_opt_problem_set_P_auto(lfds_opt_problem_t *opt_problem)
+lfds_opt_problem_set_initial_Q_auto(lfds_opt_problem_t *opt_problem)
 {
     const gsl_matrix *P_min = opt_problem->P_min;
     const gsl_matrix *P_max = opt_problem->P_max;
@@ -200,8 +200,8 @@ lfds_opt_problem_set_P_auto(lfds_opt_problem_t *opt_problem)
     const size_t N  = opt_problem->N;
     const size_t K  = opt_problem->K;
 
-    // initialize P to P_min
-    gsl_matrix_memcpy(opt_problem->P, P_min);
+    // initialize Q to P_min
+    gsl_matrix_memcpy(opt_problem->Q, P_min);
 
     // initialize delta vector
     gsl_vector *delta = gsl_vector_alloc(K);
@@ -219,14 +219,14 @@ lfds_opt_problem_set_P_auto(lfds_opt_problem_t *opt_problem)
         gsl_vector_sub(delta, &p_min.vector);
         gsl_vector_scale(delta, c);
 
-        gsl_vector_view p_view = gsl_matrix_row(opt_problem->P, n);
+        gsl_vector_view p_view = gsl_matrix_row(opt_problem->Q, n);
         gsl_vector_add(&p_view.vector, delta);
     }
 
     // free delta
     gsl_vector_free(delta);
 
-    opt_problem->user_defined_P = 0;
+    opt_problem->user_defined_Q = 0;
 }
 
 
@@ -250,8 +250,8 @@ lfds_opt_problem_setup(lfds_opt_problem_t *opt_problem)
         GSL_ERROR(lfds_strerror(status), status);
     }
 
-    if (!opt_problem->user_defined_P) {
-        lfds_opt_problem_set_P_auto(opt_problem);
+    if (!opt_problem->user_defined_Q) {
+        lfds_opt_problem_set_initial_Q_auto(opt_problem);
     }
 
     status = lfds_opt_problem_check_P(opt_problem);
@@ -277,12 +277,12 @@ lfds_opt_problem_get_objective_val(const lfds_opt_problem_t *opt_problem)
 {
     const lfds_function_t f = opt_problem->f;
     const void *f_params = opt_problem->f_params;
-    const gsl_matrix *P = opt_problem->P;
+    const gsl_matrix *Q = opt_problem->Q;
     const double mu = opt_problem->mu;
 
     double f_val = 0;
     for (int k = 0; k < opt_problem->K; k++) {
-        gsl_vector_const_view p_view = gsl_matrix_const_column(P, k);
+        gsl_vector_const_view p_view = gsl_matrix_const_column(Q, k);
         f_val += f(&p_view.vector, k, f_params);
     }
 
@@ -291,9 +291,9 @@ lfds_opt_problem_get_objective_val(const lfds_opt_problem_t *opt_problem)
 
 
 const gsl_matrix*
-lfds_opt_problem_get_P(const lfds_opt_problem_t *opt_problem)
+lfds_opt_problem_get_Q(const lfds_opt_problem_t *opt_problem)
 {
-    return opt_problem->P;
+    return opt_problem->Q;
 }
 
 
@@ -380,23 +380,23 @@ lfds_opt_problem_set_bands(lfds_opt_problem_t *opt_problem,
 
 
 int
-lfds_opt_problem_set_P(lfds_opt_problem_t *opt_problem,
-                       gsl_matrix         *P)
+lfds_opt_problem_set_initial_Q(lfds_opt_problem_t *opt_problem,
+                               gsl_matrix         *Q_init)
 {
     size_t N = opt_problem->N;
     size_t K = opt_problem->K;
     
     int status = CFPD_INVALID_P;
     
-    if (P != NULL && P->size1 == N && P->size2 == K) {
-        status = gsl_matrix_memcpy(opt_problem->P, P);   
+    if (Q_init != NULL && Q_init->size1 == N && Q_init->size2 == K) {
+        status = gsl_matrix_memcpy(opt_problem->Q, Q_init);   
     }
 
     if (status) {
         GSL_ERROR(lfds_strerror(CFPD_INVALID_P), CFPD_INVALID_P);
     }
 
-    opt_problem->user_defined_P = 1;
+    opt_problem->user_defined_Q = 1;
     opt_problem->status = CFPD_CONTINUE;
 
     return opt_problem->status;

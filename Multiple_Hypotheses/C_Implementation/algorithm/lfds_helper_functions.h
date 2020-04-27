@@ -1,6 +1,8 @@
 #ifndef CFPD_HELPER_FUNCTIONS_H
 #define CFPD_HELPER_FUNCTIONS_H
 
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
 
 double
 lfds_vector_sum(const gsl_vector *v);
